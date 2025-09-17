@@ -1,0 +1,576 @@
+<%- include("partials/navbar") %>
+
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-4">
+    Match: <%= match.home_team %> vs. <%= match.away_team %>
+  </h1>
+
+<p><strong>Datum & čas:</strong>
+  <%= match.DateTime ? new Date(match.DateTime).toLocaleString('en-GB', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      }) : 'N/A' %>
+</p>
+
+  <p><strong>Referees:</strong> <%= match.referee1_name %> & <%= match.referee2_name %></p>
+  <p><strong>Phase:</strong> <%= match.phase_name %> - <%= match.phasedetail_name %></p>
+  <p><strong>Teams:</strong> <%= match.home_team %> vs. <%= match.away_team %></p>
+
+  <h2 class="text-xl font-bold mt-6 mb-2">Penalties</h2>
+  <p>2min total: <%= match.total_2min %> (home: <%= match.total_2min_home %>, away: <%= match.total_2min_away %>)</p>
+  <p>5min total: <%= match.total_5min %> (home: <%= match.total_5min_home %>, away: <%= match.total_5min_away %>)</p>
+
+
+
+
+   <!-- ========== Last Matches for Teams ========== -->
+<h2 class="text-xl font-bold mt-6 mb-4">Last Matches</h2>
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <h3 class="text-lg font-bold mb-2">Home Team: <%= match.home_team %></h3>
+    <div class="overflow-x-auto">
+      <table class="table table-bordered table-striped w-full">
+        <thead>
+          <tr class="text-center">
+            <th>Match</th>
+            <th>Competition</th>
+            <th>Season</th>
+            <th>Phase</th>
+            <th>Phase Detail</th>
+            <th>Date</th>
+            <th>Total 2 min</th>
+            <th>Total 5 min</th>
+            <th>2 min Home</th>
+            <th>2 min Away</th>
+            <th>5 min Home</th>
+            <th>5 min Away</th>
+          </tr>
+        </thead>
+        <tbody id="homeLastMatchesTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-6 mb-4">
+    <h3 class="text-lg font-bold mb-2">Away Team: <%= match.away_team %></h3>
+    <div class="overflow-x-auto">
+      <table class="table table-bordered table-striped w-full">
+        <thead>
+          <tr class="text-center">
+            <th>Match</th>
+            <th>Competition</th>
+            <th>Season</th>
+            <th>Phase</th>
+            <th>Phase Detail</th>
+            <th>Date</th>
+            <th>Total 2 min</th>
+            <th>Total 5 min</th>
+            <th>2 min Home</th>
+            <th>2 min Away</th>
+            <th>5 min Home</th>
+            <th>5 min Away</th>
+          </tr>
+        </thead>
+        <tbody id="awayLastMatchesTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+  <!-- H2H Toggle menu-->
+   <div class="flex space-x-2 my-4">
+  <button class="btn btn-primary h2h-btn" data-target="mutualDiv">H2H Match Stats</button>
+  <button class="btn btn-secondary h2h-btn" data-target="teamsDiv">H2H Team Stats</button>
+  <button class="btn btn-secondary h2h-btn" data-target="refereeDiv">H2H Referee Stats</button>
+  <button class="btn btn-secondary h2h-btn" data-target="refereepairDiv">H2H Referee Pair Stats</button>
+</div>
+
+  <!-- ========== H2H Mutual Stats ========== -->
+   <div id="mutualDiv" class="h2h-table">
+        <h2 class="text-xl font-bold mt-6 mb-2">H2H Stats</h2>
+        <select id="mutualLevel" class="border px-2 py-1 rounded mb-4">
+          <option value="overall">Overall</option>
+          <option value="competition">Competition</option>
+          <option value="season">Season</option>
+          <option value="phase">Phase</option>
+          <option value="phasedetail">Phase Detail</option>
+        </select>
+      
+        <div class="overflow-x-auto">
+          <table class="table-auto w-full border min-w-max">
+            <thead>
+              <tr class="bg-gray-100 text-center">
+                <th class="px-4 py-2">Competition</th>
+                <th class="px-4 py-2">Season</th>
+                <th class="px-4 py-2">Phase</th>
+                <th class="px-4 py-2">Phase Detail</th>
+                <th class="px-4 py-2">Matches</th>
+                <th class="px-4 py-2">Avg 2min</th>
+                <th class="px-4 py-2">Avg 5min</th>
+                <th class="px-4 py-2">Avg 2min home</th>
+                <th class="px-4 py-2">Avg 2min away</th>
+                <th class="px-4 py-2">Avg 5min home</th>
+                <th class="px-4 py-2">Avg 5min away</th>
+                <th class="px-4 py-2">&gt;5.5</th>
+                <th class="px-4 py-2">&gt;6.5</th>
+                <th class="px-4 py-2">&gt;7.5</th>
+                <th class="px-4 py-2">&gt;8.5</th>
+                <th class="px-4 py-2">&gt;9.5</th>
+                <th class="px-4 py-2">&gt;10.5</th>
+              </tr>
+            </thead>
+            <tbody id="mutualTable">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+    </div>
+
+  <!-- ========== H2H Teams Stats ========== -->
+  <div id="teamsDiv" class="h2h-table d-none">
+      <h2 class="text-xl font-bold mt-6 mb-2">H2H Teams Stats</h2>
+      <select id="teamsLevel" class="border px-2 py-1 rounded mb-4">
+        <option value="overall">Overall</option>
+        <option value="competition">Competition</option>
+        <option value="season">Season</option>
+        <option value="phase">Phase</option>
+        <option value="phasedetail">Phase Detail</option>
+      </select>
+    
+      <div class="overflow-x-auto">
+        <table class="table-auto w-full border">
+          <thead>
+            <tr class="bg-gray-100 text-center">
+              <th class="px-4 py-2">Team</th>
+              <th class="px-4 py-2">Competition</th>
+              <th class="px-4 py-2">Season</th>
+              <th class="px-4 py-2">Phase</th>
+              <th class="px-4 py-2">Phase Detail</th>
+              <th class="px-4 py-2">Matches</th>
+              <th class="px-4 py-2">Avg 2min</th>
+              <th class="px-4 py-2">Avg 5min</th>
+              <th class="px-4 py-2">Avg 2min home</th>
+              <th class="px-4 py-2">Avg 2min away</th>
+              <th class="px-4 py-2">Avg 5min home</th>
+              <th class="px-4 py-2">Avg 5min away</th>
+            </tr>
+          </thead>
+          <tbody id="teamsTable"></tbody>
+        </table>
+      </div>
+  </div>
+
+  <!-- ========== H2H Referee Stats ========== -->
+   <div id="refereeDiv" class="h2h-table d-none">
+       <h2 class="text-xl font-bold mt-6 mb-2">H2H Referee Stats</h2>
+       <select id="refereeLevel" class="border px-2 py-1 rounded mb-4">
+         <option value="overall">Overall</option>
+         <option value="competition">Competition</option>
+       </select>
+     
+       <div class="overflow-x-auto">
+         <table class="table-auto w-full border">
+           <thead>
+             <tr class="bg-gray-100 text-center">
+               <th class="px-4 py-2">Referee</th>
+               <th class="px-4 py-2">Level</th>
+               <th class="px-4 py-2">Matches</th>
+               <th class="px-4 py-2">Avg 2min</th>
+               <th class="px-4 py-2">Avg 5min</th>
+               <th class="px-4 py-2">Avg 2min home</th>
+               <th class="px-4 py-2">Avg 2min away</th>
+               <th class="px-4 py-2">Avg 5min home</th>
+               <th class="px-4 py-2">Avg 5min away</th>
+             </tr>
+           </thead>
+           <tbody id="refereeTable"></tbody>
+         </table>
+       </div>
+    </div>
+
+  <!-- ========== H2H Referee Pair Stats ========== -->   
+<div id="refereepairDiv" class="h2h-table d-none">
+   <h2 class="text-xl font-bold mt-6 mb-2">H2H Referee Pair Stats</h2>
+   <select id="refereepairLevel" class="border px-2 py-1 rounded mb-4">
+     <option value="overall">Overall</option>
+     <option value="competition">Competition</option>
+   </select>
+
+   <div class="overflow-x-auto">
+     <table class="table-auto w-full border">
+       <thead>
+         <tr class="bg-gray-100 text-center">
+           <th class="px-4 py-2">Referee Pair</th>
+           <th class="px-4 py-2">Level</th>
+           <th class="px-4 py-2">Matches</th>
+           <th class="px-4 py-2">Avg 2min</th>
+           <th class="px-4 py-2">Avg 5min</th>
+           <th class="px-4 py-2">Avg 2min home</th>
+           <th class="px-4 py-2">Avg 2min away</th>
+           <th class="px-4 py-2">Avg 5min home</th>
+           <th class="px-4 py-2">Avg 5min away</th>
+         </tr>
+       </thead>
+       <tbody id="refereepairTable"></tbody>
+     </table>
+   </div>
+</div>
+
+  <!-- ========== Individual Matches ========== -->
+<h2 class="text-xl font-bold mt-4 mb-4">H2H Zápasy</h2>
+<div class="overflow-x-auto">
+  <table class="table-auto w-full border">
+    <thead>
+      <tr class="bg-gray-100 text-center">
+        <th class="px-4 py-2">Match</th>
+        <th class="px-4 py-2">Competition</th>
+        <th class="px-4 py-2">Season</th>
+        <th class="px-4 py-2">Phase</th>
+        <th class="px-4 py-2">Phase Detail</th>          
+        <th class="px-4 py-2">Date</th>
+        <th class="px-4 py-2">Total 2 min</th>
+        <th class="px-4 py-2">Total 5 min</th>
+        <th class="px-4 py-2">2 min Home</th>
+        <th class="px-4 py-2">2 min Away</th>
+        <th class="px-4 py-2">5 min Home</th>
+        <th class="px-4 py-2">5 min Away</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (mutualMatches && mutualMatches.length > 0) { %>
+        <% mutualMatches.forEach(m => { %>
+          <tr class="text-center border-b hover:bg-gray-50">
+            <td class="px-4 py-2">
+              <a href="/matches/<%= m.match_id %>" class="text-blue-600 hover:underline">
+                <%= m.home_team %> vs. <%= m.away_team %>
+              </a>
+            </td>
+            <td class="px-4 py-2"><%= m.competition_name %></td>
+            <td class="px-4 py-2"><%= m.season_name %></td>
+            <td class="px-4 py-2"><%= m.phase_name %></td>
+            <td class="px-4 py-2"><%= m.phasedetail_name %></td>          
+            <td class="px-4 py-2"><%= new Date(m.DateTime).toISOString().slice(0,10) %></td>
+            <td class="px-4 py-2"><%= m.total_2min %></td>
+            <td class="px-4 py-2"><%= m.total_5min %></td>
+            <td class="px-4 py-2"><%= m.total_2min_home %></td>
+            <td class="px-4 py-2"><%= m.total_2min_away %></td>
+            <td class="px-4 py-2"><%= m.total_5min_home %></td>
+            <td class="px-4 py-2"><%= m.total_5min_away %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="12" class="text-center py-4">No mutual matches available.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+
+
+
+
+
+  <a href="/matches" class="inline-block mt-4 text-blue-600 hover:underline">← Back to matches</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+
+  const mutualData = {
+    overall: <%- JSON.stringify(mutualStats.mutual_overall || []) %>,
+    competition: <%- JSON.stringify(mutualStats.mutual_competition || []) %>,
+    season: <%- JSON.stringify(mutualStats.mutual_season || []) %>,
+    phase: <%- JSON.stringify(mutualStats.mutual_phase || []) %>,
+    phasedetail: <%- JSON.stringify(mutualStats.mutual_phasedetail || []) %>,
+  };
+
+// first element of mutual_overall
+  const mutualOverall = (mutualData.overall.length > 0) ? mutualData.overall[0] : null;
+
+  const teamsData = {
+    overall: <%- JSON.stringify(mutualStats.teams_overall || []) %>,
+    competition: <%- JSON.stringify(mutualStats.teams_competition || []) %>,
+    season: <%- JSON.stringify(mutualStats.teams_season || []) %>,
+    phase: <%- JSON.stringify(mutualStats.teams_phase || []) %>,
+    phasedetail: <%- JSON.stringify(mutualStats.teams_phasedetail || []) %>,
+  };
+
+  const refereeData = {
+    overall: <%- JSON.stringify(mutualStats.referees_overall || []) %>,
+    competition: <%- JSON.stringify(mutualStats.referees_competition || []) %>,
+  };
+
+  const refereePairData = {
+    overall: <%- JSON.stringify(mutualStats.referee_pairs_overall || []) %>,
+    competition: <%- JSON.stringify(mutualStats.referee_pairs_competition || []) %>,
+  };
+
+
+// mutuals renderer
+function renderMutuals(level) {
+    const tbody = document.getElementById("mutualTable");
+    tbody.innerHTML = "";
+    const rows = (mutualData[level] || []).slice();
+
+    // sort by matches descending
+  rows.sort((a, b) => (b.matches || 0) - (a.matches || 0));
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="17" class="text-center">No data</td></tr>`;
+      return;
+    }
+
+
+    rows.forEach(row => {
+      tbody.innerHTML += `
+        <tr class="text-center border-b">
+          <td class="px-4 py-2">${row.competition_name}</td>
+          <td class="px-4 py-2">${row.season_name}</td>
+          <td class="px-4 py-2">${row.phase_name}</td>
+          <td class="px-4 py-2">${row.phasedetail_name}</td>
+          <td class="px-4 py-2">${row.matches}</td>
+          <td class="px-4 py-2">${row.avg_2min || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min || "-"}</td>
+          <td class="px-4 py-2">${row.avg_2min_home || "-"}</td>
+          <td class="px-4 py-2">${row.avg_2min_away || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min_home || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min_away || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_5 || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_6 || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_7 || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_8 || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_9 || "-"}</td>
+          <td class="px-4 py-2">${row.pct_over_10 || "-"}</td>
+        </tr>
+      `;
+    });
+
+
+ // always append totals row
+    if (mutualOverall && Object.keys(mutualOverall).length > 0) {
+      tbody.innerHTML += `
+        <tr class="text-center font-bold bg-gray-200">
+          <td class="px-4 py-2">Total</td>
+          <td class="px-4 py-2"></td>
+          <td class="px-4 py-2"></td>
+          <td class="px-4 py-2"></td>
+          <td class="px-4 py-2">${mutualOverall.matches}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_2min || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_5min || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_2min_home || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_2min_away || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_5min_home || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.avg_5min_away || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_5 || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_6 || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_7 || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_8 || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_9 || "-"}</td>
+          <td class="px-4 py-2">${mutualOverall.pct_over_10 || "-"}</td>
+        </tr>
+      `;
+    }
+  }
+
+  // Init
+  document.getElementById("mutualLevel").addEventListener("change", e => {
+    renderMutuals(e.target.value);
+  });
+
+  renderMutuals("overall");
+
+
+// teams renderer
+function renderTeams(level) {
+    const tbody = document.getElementById("teamsTable");
+    tbody.innerHTML = "";
+  const rows = (teamsData[level] || []).slice();
+
+    // sort by matches descending
+  rows.sort((a, b) => (b.matches || 0) - (a.matches || 0));
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center">No data</td></tr>`;
+      return;
+    }
+
+
+    rows.forEach(row => {
+      tbody.innerHTML += `
+        <tr class="text-center border-b">
+          <td class="px-4 py-2 font-medium">${row.team_name}</td>
+          <td class="px-4 py-2">${row.competition_name}</td>
+          <td class="px-4 py-2">${row.season_name}</td>
+          <td class="px-4 py-2">${row.phase_name}</td>
+          <td class="px-4 py-2">${row.phasedetail_name}</td>
+          <td class="px-4 py-2">${row.matches}</td>
+          <td class="px-4 py-2">${row.avg_2min || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min || "-"}</td>
+          <td class="px-4 py-2">${row.avg_2min_home || "-"}</td>
+          <td class="px-4 py-2">${row.avg_2min_away || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min_home || "-"}</td>
+          <td class="px-4 py-2">${row.avg_5min_away || "-"}</td>
+        </tr>
+      `;
+    });
+  }
+
+  // Init
+  document.getElementById("teamsLevel").addEventListener("change", e => {
+    renderTeams(e.target.value);
+  });
+
+  renderTeams("overall");
+
+// referees renderer
+  function renderReferees(level) {
+  const tbody = document.getElementById("refereeTable");
+  const rows = (refereeData[level] || []).slice();
+  tbody.innerHTML = "";
+
+  // sort by matches descending
+  rows.sort((a, b) => (b.matches || 0) - (a.matches || 0));
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center">No data</td></tr>`;
+    return;
+  }
+
+  rows.forEach(row => {
+    tbody.innerHTML += `
+      <tr class="text-center border-b">
+        <td class="px-4 py-2 font-medium">${row.referee_name || "-"}</td>
+        <td class="px-4 py-2">${row.competition_name || row.season_name}</td>
+        <td class="px-4 py-2">${row.matches || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min_home || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min_away || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min_home || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min_away || "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+// referee pairs renderer
+function renderRefereePairs(level) {
+  const tbody = document.getElementById("refereepairTable");
+  const rows = (refereePairData[level] || []).slice();
+  tbody.innerHTML = "";
+
+    // sort by matches descending
+  rows.sort((a, b) => (b.matches || 0) - (a.matches || 0));
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center">No data</td></tr>`;
+    return;
+  }
+
+
+  rows.forEach(row => {
+    tbody.innerHTML += `
+      <tr class="text-center border-b">
+        <td class="px-4 py-2 font-medium">${row.pair_name || "-"}</td>
+        <td class="px-4 py-2">${row.competition_name || row.season_name}</td>
+        <td class="px-4 py-2">${row.matches || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min_home || "-"}</td>
+        <td class="px-4 py-2">${row.avg_2min_away || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min_home || "-"}</td>
+        <td class="px-4 py-2">${row.avg_5min_away || "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+  // Init
+
+document.getElementById("refereeLevel").addEventListener("change", e => {
+  renderReferees(e.target.value);
+});
+
+document.getElementById("refereepairLevel").addEventListener("change", e => {
+  renderRefereePairs(e.target.value);
+});
+
+// Initial render
+renderReferees("overall");
+renderRefereePairs("overall");
+
+  // toggle stats
+
+  const buttons = document.querySelectorAll('.h2h-btn');
+const tables = document.querySelectorAll('.h2h-table');
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.getAttribute('data-target');
+
+    // Hide all tables
+    tables.forEach(t => t.classList.add('d-none'));
+
+    // Show target table
+    document.getElementById(targetId).classList.remove('d-none');
+
+    // Update button styles
+    buttons.forEach(b => b.classList.replace('btn-primary', 'btn-secondary'));
+    btn.classList.replace('btn-secondary', 'btn-primary');
+  });
+});
+
+
+
+
+
+
+ // Last matches data from backend
+  const homeLastMatchesData = <%- JSON.stringify(homeLastMatches || []) %>;
+  const awayLastMatchesData = <%- JSON.stringify(awayLastMatches || []) %>;
+
+  // Helper to render matches table
+  function renderLastMatches(tbodyId, matches) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+
+    if (!matches.length) {
+      tbody.innerHTML = `<tr><td colspan="12" class="text-center">No data</td></tr>`;
+      return;
+    }
+
+    matches.forEach(m => {
+      tbody.innerHTML += `
+        <tr class="text-center border-b">
+          <td class="px-4 py-2">
+            <a href="/matches/${m.match_id}" class="text-blue-600 hover:underline">
+              ${m.home_team} vs. ${m.away_team}
+            </a>
+          </td>
+          <td class="px-4 py-2">${m.competition_name}</td>
+          <td class="px-4 py-2">${m.season_name}</td>
+          <td class="px-4 py-2">${m.phase_name}</td>
+          <td class="px-4 py-2">${m.phasedetail_name}</td>
+          <td class="px-4 py-2">${new Date(m.DateTime).toISOString().slice(0,10)}</td>
+          <td class="px-4 py-2">${m.total_2min}</td>
+          <td class="px-4 py-2">${m.total_5min}</td>
+          <td class="px-4 py-2">${m.total_2min_home}</td>
+          <td class="px-4 py-2">${m.total_2min_away}</td>
+          <td class="px-4 py-2">${m.total_5min_home}</td>
+          <td class="px-4 py-2">${m.total_5min_away}</td>
+        </tr>
+      `;
+    });
+  }
+
+  // Render home and away last matches
+  renderLastMatches('homeLastMatchesTable', homeLastMatchesData);
+  renderLastMatches('awayLastMatchesTable', awayLastMatchesData);
+
+
+</script>

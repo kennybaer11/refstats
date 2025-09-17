@@ -1,0 +1,173 @@
+<%- include("partials/navbar") %>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-4">Competition Stats</h1>
+
+  <!-- Filters -->
+  <div class="mb-4 flex gap-4">
+    <select id="competitionFilter">
+      <option value="">All Competitions</option>
+    </select>
+    <select id="seasonFilter">
+      <option value="">All Seasons</option>
+    </select>
+    <select id="phaseFilter">
+      <option value="">All Phases</option>
+    </select>
+    <select id="phaseDetailFilter">
+      <option value="">All Phase Details</option>
+    </select>
+      <!-- Group by -->
+       <span>Group by</span>
+<select id="levelFilter">
+  <option value="competition">By Competition</option>
+  <option value="season">By Season</option>
+  <option value="phase">By Phase</option>
+  <option value="phasedetail" selected>By Phase Detail</option>
+</select>
+  </div>
+
+
+
+  <table id="competitionTable" class="display text-sm">
+    <thead>
+      <tr class="bg-gray-200">
+        <th>Competition</th>
+        <th>Season</th>
+        <th>Phase</th>
+        <th>Phase Detail</th>
+        <th>Matches</th>
+        <th>Avg 2min</th>
+        <th>Avg 2min Home</th>
+        <th>Avg 2min Away</th>
+        <th>Avg 5min</th>
+        <th>Avg 5min Home</th>
+        <th>Avg 5min Away</th>
+        <th>>5,5 2min</th>
+        <th>>6,5 2min</th>
+        <th>>7,5 2min</th>
+        <th>>8,5 2min</th>
+        <th>>9,5 2min</th>
+        <th>>10,5 2min</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+let table;
+
+function getLevel() {
+  return $("#levelFilter").val(); // user selection determines level
+}
+
+
+// update url
+function updateURL() {
+  const params = new URLSearchParams();
+  const competition = $("#competitionFilter").val();
+  const season = $("#seasonFilter").val();
+  const phase = $("#phaseFilter").val();
+  const phasedetail = $("#phaseDetailFilter").val();
+  const level = $("#levelFilter").val();
+
+  if (competition) params.set("competition", competition);
+  if (season) params.set("season", season);
+  if (phase) params.set("phase", phase);
+  if (phasedetail) params.set("phasedetail", phasedetail);
+  if (level) params.set("level", level);
+
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  history.replaceState(null, "", newUrl);
+}
+// update url end
+
+function fetchStats() {
+  const competition = $("#competitionFilter").val();
+  const season = $("#seasonFilter").val();
+  const phase = $("#phaseFilter").val();
+  const phasedetail = $("#phaseDetailFilter").val();
+  const level = getLevel();
+
+  $.get("/competition-stats/data", { competition, season, phase, phasedetail, level }, function(res) {
+    const stats = res.stats;
+    
+    // Populate filters dynamically
+    if(res.filters) {
+      // competitions
+      if($("#competitionFilter option").length === 1) {
+        res.filters.competitions.forEach(c => {
+          $("#competitionFilter").append(`<option value="${c.competition_id}">${c.competition_name}</option>`);
+        });
+      }
+      // seasons
+      if($("#seasonFilter option").length === 1) {
+        res.filters.seasons.forEach(s => {
+          $("#seasonFilter").append(`<option value="${s.season_id}">${s.season_name}</option>`);
+        });
+      }
+      // phases
+      if($("#phaseFilter option").length === 1) {
+        res.filters.phases.forEach(p => {
+          $("#phaseFilter").append(`<option value="${p.phase_id}">${p.phase_name}</option>`);
+        });
+      }
+      // phasedetails
+      if($("#phaseDetailFilter option").length === 1) {
+        res.filters.phasedetails.forEach(pd => {
+          $("#phaseDetailFilter").append(`<option value="${pd.phasedetail_id}">${pd.phasedetail_name}</option>`);
+        });
+      }
+    }
+
+    // Fill table
+    table.clear();
+    stats.forEach(s => {
+      table.row.add([
+        s.competition_name,
+        s.season_name,
+        s.phase_name || "",
+        s.phasedetail_name || "",
+        s.matches,
+        s.avg_2min,
+        s.avg_2min_home,
+        s.avg_2min_away,
+        s.avg_5min,
+        s.avg_5min_home,
+        s.avg_5min_away,
+        s.pct_over_5,
+        s.pct_over_6,
+        s.pct_over_7,
+        s.pct_over_8,
+        s.pct_over_9,
+        s.pct_over_10
+      ]);
+    });
+    table.draw();
+  });
+}
+
+$(document).ready(function() {
+  table = $('#competitionTable').DataTable({
+    paging: true,
+    searching: true,
+    order: [[4, 'desc']], // sort by matches
+    pageLength: 25
+  });
+
+  // Initial fetch
+  fetchStats();
+
+  // On filter change
+// On filter change
+$("#competitionFilter, #seasonFilter, #phaseFilter, #phaseDetailFilter, #levelFilter").change(function() {
+    updateURL();   // update the URL whenever a filter changes
+    fetchStats();  // then fetch the new data
+});
+});
+</script>

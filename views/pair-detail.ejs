@@ -1,0 +1,222 @@
+<%- include('partials/navbar') %>
+
+<div class="container mt-4">
+  <h1><%= pair.pair_name %> (<%= pair.ref1_name %> & <%= pair.ref2_name %>)</h1>
+
+
+
+
+<!-- Pair Related News -->
+<% if (pair.relatedNews && pair.relatedNews.length > 0) { %>
+  <% pair.relatedNews.forEach(post => { %>
+    <div class="card mb-3 p-2">
+      <h5>
+        <a href="/news/<%= post.id %>" class="text-decoration-none">
+          <%= post.title %>
+        </a>
+      </h5>
+      <small class="text-muted"><%= new Date(post.created_at).toLocaleDateString() %></small>
+    </div>
+  <% }) %>
+<% } else { %>
+  <p class="text-muted mt-3">No related news yet.</p>
+<% } %>
+
+
+
+
+  <% for (let compId in pair.competitions) { 
+       const comp = pair.competitions[compId]; %>
+
+    <h2><%= comp.competition_name %></h2>
+
+    <!-- Phase filter -->
+    <div class="mb-2">
+      <label>Phase:
+        <select class="form-select form-select-sm phase-filter" data-comp="<%= compId %>">
+          <% 
+          let allPhases = [];
+          for (let seasonId in comp.seasons) {
+            const phases = Object.values(comp.seasons[seasonId].phases).filter(p => p.phase_id); // exclude all_phases
+            phases.forEach(p => {
+              if (!allPhases.find(x => x.phase_id === p.phase_id)) allPhases.push(p);
+            });
+          }
+          %>
+          <option value="">All phases</option>
+          <% allPhases.forEach(p => { %>
+            <option value="<%= p.phase_id %>"><%= p.phase_name %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <!-- Competition stats table -->
+    <table class="table table-striped" id="table-<%= compId %>">
+      <thead>
+        <tr>
+          <th>Season</th>
+          <th>Matches</th>
+          <th>Avg 2min</th>
+          <th>Avg 5min</th>
+          <th>2min Home</th>
+          <th>2min Away</th>
+          <th>5min Home</th>
+          <th>5min Away</th>
+          <th>% >5</th>
+          <th>% >6</th>
+          <th>% >7</th>
+          <th>% >8</th>
+          <th>% >9</th>
+          <th>% >10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let seasonId in comp.seasons) { %>
+          <tr data-season="<%= seasonId %>">
+            <td><%= comp.seasons[seasonId].season_name %></td>
+            <td colspan="13">Loading...</td>
+          </tr>
+        <% } %>
+      </tbody>
+      <% if (comp.career) { %>
+      <tfoot>
+        <tr class="table-secondary">
+          <td><strong>Career totals</strong></td>
+          <td><%= comp.career.matches %></td>
+          <td><%= comp.career.avg_2min %></td>
+          <td><%= comp.career.avg_5min %></td>
+          <td><%= comp.career.avg_2min_home %></td>
+          <td><%= comp.career.avg_2min_away %></td>
+          <td><%= comp.career.avg_5min_home %></td>
+          <td><%= comp.career.avg_5min_away %></td>
+          <td><%= comp.career.pct_over_5 %></td>
+          <td><%= comp.career.pct_over_6 %></td>
+          <td><%= comp.career.pct_over_7 %></td>
+          <td><%= comp.career.pct_over_8 %></td>
+          <td><%= comp.career.pct_over_9 %></td>
+          <td><%= comp.career.pct_over_10 %></td>
+        </tr>
+      </tfoot>
+      <% } %>
+    </table>
+
+  <% } %>
+
+  <!-- Matches Table -->
+  <h2>Matches Officiated</h2>
+  <table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Competition</th>
+        <th>Home Team</th>
+        <th>Away Team</th>
+        <th>2min</th>
+        <th>5min</th>
+        <th>Ref 1</th>
+        <th>Ref 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (pair.matches && pair.matches.length) { %>
+        <% pair.matches.forEach(match => { %>
+          <tr>
+            <td><a href="/matches/<%= match.match_id %>"><%= match.DateTime %></a></td>
+            <td><%= match.competition_name %></td>
+            <td><%= match.home_team_name %></td>
+            <td><%= match.away_team_name %></td>
+            <td><%= match.total_2min %></td>
+            <td><%= match.total_5min %></td>
+            <td><%= match.ref1_name %></td>
+            <td><%= match.ref2_name %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="8">No matches found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+(function() {
+  const competitions = <%- JSON.stringify(pair.competitions) %>;
+
+  for (const compId in competitions) {
+    const comp = competitions[compId];
+    const compData = comp.seasons;
+    const careerPhases = comp.career_phases;
+    const careerTotals = comp.career;
+
+    const table = document.getElementById(`table-${compId}`);
+    const tbodyRows = Array.from(table.querySelectorAll("tbody tr"));
+    const select = document.querySelector(`.phase-filter[data-comp="${compId}"]`);
+    const tfootRow = table.querySelector("tfoot tr");
+
+    function formatNumber(num, decimals = 1) {
+      if (num === null || num === undefined) return '-';
+      return typeof num === 'number' ? num.toFixed(decimals) : parseFloat(num).toFixed(decimals);
+    }
+
+    function formatInt(num) {
+      return Math.round(num);
+    }
+
+    function updateTable(phaseId) {
+      tbodyRows.forEach(row => {
+        const seasonId = row.dataset.season;
+        const season = compData[seasonId];
+        let phase;
+        if (!phaseId) {
+          phase = season.phases.all_phases;
+        } else {
+          const phasesArray = Object.values(season.phases).filter(p => p.phase_id === phaseId);
+          phase = phasesArray[0];
+        }
+        if (!phase) { row.style.display = "none"; return; }
+        row.style.display = "";
+        row.innerHTML = `
+          <td>${season.season_name}</td>
+          <td>${formatInt(phase.matches)}</td>
+          <td>${formatNumber(phase.avg_2min)}</td>
+          <td>${formatNumber(phase.avg_5min)}</td>
+          <td>${formatNumber(phase.avg_2min_home)}</td>
+          <td>${formatNumber(phase.avg_2min_away)}</td>
+          <td>${formatNumber(phase.avg_5min_home)}</td>
+          <td>${formatNumber(phase.avg_5min_away)}</td>
+          <td>${formatInt(phase.pct_over_5)}</td>
+          <td>${formatInt(phase.pct_over_6)}</td>
+          <td>${formatInt(phase.pct_over_7)}</td>
+          <td>${formatInt(phase.pct_over_8)}</td>
+          <td>${formatInt(phase.pct_over_9)}</td>
+          <td>${formatInt(phase.pct_over_10)}</td>
+        `;
+      });
+
+      if (tfootRow) {
+        const totals = phaseId ? careerPhases[phaseId] : careerTotals;
+        tfootRow.innerHTML = `
+          <td><strong>${phaseId ? totals.phase_name : "Career totals"}</strong></td>
+          <td>${formatInt(totals.matches)}</td>
+          <td>${formatNumber(totals.avg_2min)}</td>
+          <td>${formatNumber(totals.avg_5min)}</td>
+          <td>${formatNumber(totals.avg_2min_home)}</td>
+          <td>${formatNumber(totals.avg_2min_away)}</td>
+          <td>${formatNumber(totals.avg_5min_home)}</td>
+          <td>${formatNumber(totals.avg_5min_away)}</td>
+          <td>${formatInt(totals.pct_over_5)}</td>
+          <td>${formatInt(totals.pct_over_6)}</td>
+          <td>${formatInt(totals.pct_over_7)}</td>
+          <td>${formatInt(totals.pct_over_8)}</td>
+          <td>${formatInt(totals.pct_over_9)}</td>
+          <td>${formatInt(totals.pct_over_10)}</td>
+        `;
+      }
+    }
+
+    select.addEventListener("change", () => updateTable(select.value));
+    updateTable(select.value);
+  }
+})();
+</script>

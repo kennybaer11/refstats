@@ -1,0 +1,187 @@
+<%- include("partials/navbar") %>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-4">Referee Pair Stats</h1>
+
+  <!-- Filter Form -->
+  <form id="filterForm" method="get" class="flex flex-wrap items-center gap-4 mb-6">
+    <!-- Competition -->
+    <select name="competition" class="flex-1 min-w-[150px] border rounded px-2 py-1">
+      <option value="">All</option>
+      <% (filters.competitions || []).forEach(c => { %>
+        <option value="<%= c.id %>" <%= activeFilters.competition == c.id ? "selected" : "" %>>
+          <%= c.name %>
+        </option>
+      <% }) %>
+    </select>
+
+    <!-- Season -->
+    <select name="season" class="flex-1 min-w-[150px] border rounded px-2 py-1">
+      <option value="">All</option>
+      <% (filters.seasons || []).forEach(s => { %>
+        <option value="<%= s.id %>" <%= activeFilters.season == s.id ? "selected" : "" %>>
+          <%= s.name %>
+        </option>
+      <% }) %>
+    </select>
+
+    <!-- Phase -->
+    <select name="phase" class="flex-1 min-w-[150px] border rounded px-2 py-1">
+      <option value="">All</option>
+      <% (filters.phases || []).forEach(p => { %>
+        <option value="<%= p.id %>" <%= activeFilters.phase == p.id ? "selected" : "" %>>
+          <%= p.name %>
+        </option>
+      <% }) %>
+    </select>
+
+    <!-- Phase Detail -->
+    <select name="phasedetail" class="flex-1 min-w-[150px] border rounded px-2 py-1">
+      <option value="">All</option>
+      <% (filters.phasedetails || []).forEach(pd => { %>
+        <option value="<%= pd.id %>" <%= activeFilters.phasedetail == pd.id ? "selected" : "" %>>
+          <%= pd.name %>
+        </option>
+      <% }) %>
+    </select>
+
+    <!-- Group By -->
+    <select name="groupby" class="flex-1 min-w-[150px] border rounded px-2 py-1">
+      <option value="">Overall</option>
+      <option value="competition" <%= activeFilters.groupby === "competition" ? "selected" : "" %>>Competition</option>
+      <option value="season" <%= activeFilters.groupby === "season" ? "selected" : "" %>>Season</option>
+      <option value="phase" <%= activeFilters.groupby === "phase" ? "selected" : "" %>>Phase</option>
+      <option value="phasedetail" <%= activeFilters.groupby === "phasedetail" ? "selected" : "" %>>Phase Detail</option>
+    </select>
+
+    <!-- Reset button -->
+    <button type="button" id="resetFilters" class="bg-success text-white px-4 py-2 rounded">
+      Reset Filters
+    </button>
+  </form>
+
+  <!-- Stats Table -->
+  <table id="pairTable" class="display">
+    <thead>
+      <tr class="bg-gray-200 text-sm">
+        <th class="border px-2 py-1">Pair</th>
+        <th class="border px-2 py-1">R1</th>
+        <th class="border px-2 py-1">R2</th>
+        <th class="border px-2 py-1">Competition</th>
+        <th class="border px-2 py-1">Season</th>
+        <th class="border px-2 py-1">Phase</th>
+        <th class="border px-2 py-1">Phase Detail</th>
+        <th class="border px-2 py-1">Matches</th>
+        <th class="border px-2 py-1">Avg 2min</th>
+        <th class="border px-2 py-1">Avg 5min</th>
+        <th class="border px-2 py-1">&gt;5 2min</th>
+        <th class="border px-2 py-1">&gt;6 2min</th>
+        <th class="border px-2 py-1">&gt;7 2min</th>
+        <th class="border px-2 py-1">&gt;8 2min</th>
+        <th class="border px-2 py-1">&gt;9 2min</th>
+        <th class="border px-2 py-1">&gt;10 2min</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% pairstats.forEach(p => { %>
+        <tr class="text-sm">
+          <td class="border px-2 py-1"><a href="/pairs/<%= p.pair_id %>" class="text-blue-600 hover:underline"><%= p.pair_name %></a></td> 
+          <td class="border px-2 py-1"><a href="/referees/<%= p.ref1_id %>" class="text-blue-600 hover:underline"><%= p.ref1_name %></a></td>
+          <td class="border px-2 py-1"><a href="/referees/<%= p.ref2_id %>" class="text-blue-600 hover:underline"><%= p.ref2_name %></a></td>
+          <td class="border px-2 py-1"><%= p.competition_name %></td>
+          <td class="border px-2 py-1"><%= p.season_name %></td>
+          <td class="border px-2 py-1"><%= p.phase_name %></td>
+          <td class="border px-2 py-1"><%= p.phasedetail_name %></td>
+          <td class="border px-2 py-1"><%= p.matches %></td>
+          <td class="border px-2 py-1"><%= p.avg_2min %></td>
+          <td class="border px-2 py-1"><%= p.avg_5min %></td>
+          <td class="border px-2 py-1"><%= p.pct_over_5 %> %</td>
+          <td class="border px-2 py-1"><%= p.pct_over_6 %> %</td>
+          <td class="border px-2 py-1"><%= p.pct_over_7 %> %</td>
+          <td class="border px-2 py-1"><%= p.pct_over_8 %> %</td>
+          <td class="border px-2 py-1"><%= p.pct_over_9 %> %</td>
+          <td class="border px-2 py-1"><%= p.pct_over_10 %> %</td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+$(document).ready(function() {
+  const table = $('#pairTable').DataTable({
+    paging: true,
+    searching: true,
+    order: [[7, 'desc']], // Matches column index
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100]
+  });
+
+  const nameMap = {
+    competition: 'competition_id',
+    season: 'season_id',
+    phase: 'phase_id',
+    phasedetail: 'phasedetail_id',
+    groupby: 'group'
+  };
+
+  function fetchStats() {
+    const params = new URLSearchParams();
+    $('#filterForm select').each(function() {
+      const formName = this.name;
+      const apiName = nameMap[formName] || formName;
+      if (this.value) params.set(apiName, this.value);
+    });
+
+    const url = `https://beta.kenyschulz.com/referee/api/getpairstats.php?${params.toString()}`;
+
+    $.ajax({
+      url,
+      method: 'GET',
+      dataType: 'json',
+      success: function(data) {
+        const stats = data.stats || [];
+        table.clear();
+
+        stats.forEach(p => {
+          table.row.add([
+            `<a href="/pairs/${p.pair_id}" class="text-blue-600 hover:underline">${p.pair_name}</a>`,
+            `<a href="/referees/${p.ref1_id}" class="text-blue-600 hover:underline">${p.ref1_name}</a>`,
+            `<a href="/referees/${p.ref2_id}" class="text-blue-600 hover:underline">${p.ref2_name}</a>`,
+            p.competition_name || '—',
+            p.season_name || '—',
+            p.phase_name || '—',
+            p.phasedetail_name || '—',
+            p.matches,
+            p.avg_2min,
+            p.avg_5min,
+            (p.pct_over_5 !== null ? p.pct_over_5 + ' %' : '—'),
+            (p.pct_over_6 !== null ? p.pct_over_6 + ' %' : '—'),
+            (p.pct_over_7 !== null ? p.pct_over_7 + ' %' : '—'),
+            (p.pct_over_8 !== null ? p.pct_over_8 + ' %' : '—'),
+            (p.pct_over_9 !== null ? p.pct_over_9 + ' %' : '—'),
+            (p.pct_over_10 !== null ? p.pct_over_10 + ' %' : '—')
+          ]);
+        });
+
+        table.draw();
+      },
+      error: function(err) {
+        console.error('Error fetching pair stats:', err);
+      }
+    });
+  }
+
+  $('#filterForm select').on('change', fetchStats);
+  $('#resetFilters').on('click', function() {
+    $('#filterForm select').val('');
+    fetchStats();
+  });
+
+  fetchStats();
+});
+</script>

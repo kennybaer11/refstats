@@ -1,0 +1,197 @@
+<%- include('partials/navbar') %>
+
+<style>
+  .list-group-item-action {
+  cursor: pointer;
+}
+</style>
+
+<div class="container mt-4">
+  <h1>Add News</h1>
+
+  <form id="add-news-form" enctype="multipart/form-data">
+    <input name="title" placeholder="News title" required class="border p-2 w-full"/><br><br>
+
+    <!-- Quill editor -->
+    <div id="editor" style="height: 150px;"></div>
+    <textarea name="content" id="content" style="display:none;"></textarea><br><br>
+
+    <!-- Banner upload -->
+    <label>Banner image (optional):
+      <input type="file" name="banner" accept="image/*">
+    </label><br><br>
+
+    <!-- Tags -->
+<div class="mb-3 position-relative">
+  <label for="tags-search" class="form-label">Add tags</label>
+  <input type="text" id="tags-search" class="form-control" placeholder="Type to search..." autocomplete="off">
+  <ul id="tags-dropdown" class="list-group position-absolute w-100" style="z-index:1000; display:none;"></ul>
+  <input type="hidden" name="tags" id="tags-hidden">
+</div>
+<div id="selected-tags-display" class="mb-3"></div>
+
+    <button type="submit" class="text-white bg-success px-4 py-2 rounded">Post News</button>
+  </form>
+
+  <div id="message" style="margin-top:15px;"></div>
+</div>
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
+<script>
+const quill = new Quill('#editor', {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      ['link', 'image', 'video'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['clean']
+    ]
+  }
+});
+
+
+// Video handler
+quill.getModule('toolbar').addHandler('video', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'video/*';
+  input.click();
+
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('video', file);
+
+    try {
+      const res = await fetch('https://beta.kenyschulz.com/referee/api/upload-video.php', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.url) {
+        const range = quill.getSelection(true);
+        quill.insertEmbed(range.index, 'video', data.url, 'user');
+      } else {
+        alert('Video upload failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Video upload failed: ' + err.message);
+    }
+  };
+});
+
+
+
+// tags
+const tagsInput = document.getElementById('tags-search');
+const dropdown = document.getElementById('tags-dropdown');
+const hiddenInput = document.getElementById('tags-hidden');
+
+const tags = <%- JSON.stringify(tags) %>;
+let selectedTags = [];
+
+tagsInput.addEventListener('input', () => {
+  const value = tagsInput.value.toLowerCase();
+  dropdown.innerHTML = '';
+  if (!value) {
+    dropdown.style.display = 'none';
+    return;
+  }
+  const matches = tags.filter(t => t.value.toLowerCase().includes(value));
+  matches.forEach(t => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item list-group-item-action';
+    li.textContent = `${t.value} (${t.category})`;
+    li.dataset.id = t.id;
+    li.dataset.value = t.value;
+    li.dataset.category = t.category;
+    li.addEventListener('click', () => {
+      if (!selectedTags.some(tag => tag.id === t.id)) {
+        selectedTags.push(t);
+        updateHiddenInput();
+        updateSelectedTagsDisplay();
+      }
+      tagsInput.value = '';
+      dropdown.style.display = 'none';
+    });
+    dropdown.appendChild(li);
+  });
+  dropdown.style.display = matches.length ? 'block' : 'none';
+});
+
+function updateHiddenInput() {
+  hiddenInput.value = JSON.stringify(selectedTags);
+}
+
+function updateSelectedTagsDisplay() {
+  const display = document.getElementById('selected-tags-display');
+  display.innerHTML = selectedTags.map((t, i) => `
+    <span class="badge bg-primary me-1">
+      ${t.value} <small>(${t.category})</small>
+      <button type="button" class="btn-close btn-close-white btn-sm ms-1" 
+        aria-label="Remove" onclick="removeTag(${i})"></button>
+    </span>
+  `).join('');
+}
+
+function removeTag(index) {
+  selectedTags.splice(index, 1);
+  updateHiddenInput();
+  updateSelectedTagsDisplay();
+}
+//tags end
+
+
+
+
+const form = document.getElementById('add-news-form');
+const messageDiv = document.getElementById('message');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  messageDiv.innerText = '';
+
+  const title = form.title.value.trim();
+  const content = quill.root.innerHTML.trim();
+
+  if (!title || !content) {
+    messageDiv.innerText = 'Title and content are required.';
+    return;
+  }
+
+  const formData = new FormData(form);
+  formData.append('content', content);
+
+  try {
+    const res = await fetch('https://beta.kenyschulz.com/referee/api/add-news.php', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      messageDiv.style.color = 'green';
+      messageDiv.innerText = 'News posted successfully!';
+      form.reset();
+      quill.setContents([]);
+        // Reset selected tags
+      selectedTags = [];
+      updateHiddenInput();
+      updateSelectedTagsDisplay();
+    } else {
+      messageDiv.style.color = 'red';
+      messageDiv.innerText = 'News insert failed: ' + (data.error || 'Unknown error');
+    }
+  } catch (err) {
+    console.error(err);
+    messageDiv.style.color = 'red';
+    messageDiv.innerText = 'Upload failed: ' + err.message;
+  }
+});
+</script>

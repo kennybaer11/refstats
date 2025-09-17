@@ -1,0 +1,12 @@
+<%- include('partials/navbar') %>
+
+<div class="container">
+  <h1>Fáze 2</h1>
+  <ul>
+    <% phasedetail.forEach(c => { %>
+      <li>
+        <a href="/phasedetail/<%= c.id %>"><%= c.phasedetail_name %></a>
+      </li>
+    <% }) %>
+  </ul>
+</div>

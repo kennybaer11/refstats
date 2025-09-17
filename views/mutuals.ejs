@@ -1,0 +1,100 @@
+<%- include('partials/navbar') %>
+
+<div class="container mt-4">
+  <h1>Vzájemné zápasy</h1>
+
+  <table id="mutualsTable" class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">Mutual <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(1)">Matches <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(2)">Avg 2min <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(3)">Avg 5min <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(4)">2min Home <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(5)">2min Away <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(6)">5min Home <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(7)">5min Away <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(8)">% Over 5 <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(9)">% Over 6 <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(10)">% Over 7 <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(11)">% Over 8 <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(12)">% Over 9 <span class="sort-arrow"></span></th>
+        <th onclick="sortTable(13)">% Over 10 <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% mutuals.forEach(c => { %>
+        <tr>
+          <td><a href="/mutuals/<%= c.mutual_id %>"><%= c.mutual_name %></a></td>
+          <td><%= c.matches %></td>
+          <td><%= c.avg_2min %></td>
+          <td><%= c.avg_5min %></td>
+          <td><%= c.avg_2min_home %></td>
+          <td><%= c.avg_2min_away %></td>
+          <td><%= c.avg_5min_home %></td>
+          <td><%= c.avg_5min_away %></td>
+          <td><%= c.pct_over_5 %></td>
+          <td><%= c.pct_over_6 %></td>
+          <td><%= c.pct_over_7 %></td>
+          <td><%= c.pct_over_8 %></td>
+          <td><%= c.pct_over_9 %></td>
+          <td><%= c.pct_over_10 %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<style>
+  th { cursor: pointer; user-select: none; }
+  .sort-arrow { font-size: 0.75rem; margin-left: 4px; }
+</style>
+
+<script>
+let currentSortCol = null;
+let currentSortDir = "asc";
+
+function sortTable(colIndex, forceDir = null) {
+  const table = document.getElementById("mutualsTable");
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.rows);
+
+  // determine sort direction
+  if (forceDir) {
+    currentSortDir = forceDir;
+  } else if (currentSortCol === colIndex && currentSortDir === "asc") {
+    currentSortDir = "desc";
+  } else {
+    currentSortDir = "asc";
+  }
+  currentSortCol = colIndex;
+
+  // reset arrows
+  document.querySelectorAll("th .sort-arrow").forEach(el => el.textContent = "");
+
+  // set arrow on active column
+  const arrow = table.tHead.rows[0].cells[colIndex].querySelector(".sort-arrow");
+  arrow.textContent = currentSortDir === "asc" ? "▲" : "▼";
+
+  // sort rows
+  rows.sort((a, b) => {
+    const x = a.cells[colIndex].innerText.trim();
+    const y = b.cells[colIndex].innerText.trim();
+
+    const xVal = parseFloat(x.replace(",", ".")) || x.toLowerCase();
+    const yVal = parseFloat(y.replace(",", ".")) || y.toLowerCase();
+
+    if (xVal < yVal) return currentSortDir === "asc" ? -1 : 1;
+    if (xVal > yVal) return currentSortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // re-append sorted rows
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+// ✅ default sort by Matches column (index 1), descending
+window.onload = () => {
+  sortTable(1, "desc");
+};
+</script>

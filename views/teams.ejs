@@ -1,0 +1,13 @@
+<%- include('partials/navbar') %>
+
+<div class="container">
+  <h1>Týmy</h1>
+  <ul>
+    <% teams.forEach(c => { %>
+      <li>
+        <a href="/teams/<%= c.team_id %>"><%= c.team_name %></a>
+        <img src="<%= c.team_logo %>" style="max-height: 20px">
+      </li>
+    <% }) %>
+  </ul>
+</div>

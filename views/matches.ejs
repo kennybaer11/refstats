@@ -1,0 +1,16 @@
+<%- include('partials/navbar') %>
+
+<div class="container">
+  <h1>Zápasy</h1>
+<ul>
+  <% matches.forEach(m => { %>
+    <li>
+      <a href="/matches/<%= m.match_id %>">
+        <%= m.competition_name %> <%= m.season_name %> - <%= m.phase_name %> - <%= m.phasedetail_name %> - <%= m.home_team %> vs. <%= m.away_team %> - 
+        <%= new Date(m.DateTime).toISOString().slice(0,10) %>
+      </a>
+    </li>
+  <% }) %>
+</ul>
+
+</div>

@@ -1,0 +1,243 @@
+<%- include("partials/navbar") %>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-4"><%= competition.competition_name %></h1>
+
+
+<!-- Competition Related News -->
+<div class="mb-4">
+  <% if (relatedNews && relatedNews.length > 0) { %>
+    <% relatedNews.forEach(post => { %>
+      <div class="card mb-3 p-2">
+        <h5>
+          <a href="/news/<%= post.id %>" class="text-decoration-none">
+            <%= post.title %>
+          </a>
+        </h5>
+        <small class="text-muted"><%= new Date(post.created_at).toLocaleDateString() %></small>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p class="text-muted mt-3">No related news yet.</p>
+  <% } %>
+</div>
+
+  <!-- Optional description/history -->
+  <% if (competition.description) { %>
+    <p class="mb-4"><%= competition.description %></p>
+  <% } %>
+
+  <table id="competitionDetailTable" class="display text-sm">
+  <thead>
+    <tr class="bg-gray-200">
+      <th>Season</th>
+      <th>Phase</th>
+      <th>Phase Detail</th>
+      <th>Matches</th>
+      <th>Avg 2min</th>
+      <th>Avg 2min Home</th>
+      <th>Avg 2min Away</th>
+      <th>Avg 5min</th>
+      <th>Avg 5min Home</th>
+      <th>Avg 5min Away</th>
+      <th>>5,5 2min</th>
+      <th>>6,5 2min</th>
+      <th>>7,5 2min</th>
+      <th>>8,5 2min</th>
+      <th>>9,5 2min</th>
+      <th>>10,5 2min</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% stats.forEach(stat => { %>
+      <tr>
+        <td><%= stat.season_name %></td>
+        <td><%= stat.phase_name || "All" %></td>
+        <td><%= stat.phasedetail_name || "All" %></td>
+        <td><%= stat.matches %></td>
+        <td><%= stat.avg_2min %></td>
+        <td><%= stat.avg_2min_home %></td>
+        <td><%= stat.avg_2min_away %></td>
+        <td><%= stat.avg_5min %></td>
+        <td><%= stat.avg_5min_home %></td>
+        <td><%= stat.avg_5min_away %></td>
+        <td><%= stat.pct_over_5 %></td>
+        <td><%= stat.pct_over_6 %></td>
+        <td><%= stat.pct_over_7 %></td>
+        <td><%= stat.pct_over_8 %></td>
+        <td><%= stat.pct_over_9 %></td>
+        <td><%= stat.pct_over_10 %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+</div>
+
+
+
+<!-- Matches-->
+ <div class="container mt-4">
+  <h1>Matches: <%= competitionName %></h1>
+
+
+
+<div class="container mb-4">
+  <form id="matchesFilterForm" class="d-flex gap-2 align-items-center">
+    <select id="seasonFilter" class="form-select">
+      <option value="">All Seasons</option>
+      <% seasonOptions.forEach(s => { %>
+        <option value="<%= s.id %>"><%= s.name %></option>
+      <% }) %>
+    </select>
+
+    <select id="phaseFilter" class="form-select">
+      <option value="">All Phases</option>
+      <% phaseOptions.forEach(p => { %>
+        <option value="<%= p.id %>"><%= p.name %></option>
+      <% }) %>
+    </select>
+
+    <select id="phasedetailFilter" class="form-select">
+      <option value="">All</option>
+      <% phasedetailOptions.forEach(pd => { %>
+        <option value="<%= pd.id %>"><%= pd.name %></option>
+      <% }) %>
+    </select>
+
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </form>
+</div>
+
+
+
+
+  <% if (matches.length === 0) { %>
+    <p>No matches found for this competition.</p>
+  <% } else { %>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Season</th>
+          <th>Phase</th>
+          <th>Phase Detail</th>
+          <th>Home Team</th>
+          <th>Away Team</th>
+          <th>Referee 1</th>
+          <th>Referee 2</th>
+          <th>Pair</th>
+          <th>2min</th>
+          <th>5min</th>
+          <th>2min Home</th>
+          <th>2min Away</th>
+          <th>5min Home</th>
+          <th>5min Away</th>
+        </tr>
+      </thead>
+      <tbody id="matchesTableBody">
+        <% matches.forEach(match => { %>
+          <tr>
+            <td><a href="/matches/<%= match.match_id %>"><%= match.DateTime %></a></td>
+            <td><%= match.season_name %></td>
+            <td><%= match.phase_name || 'All' %></td>
+            <td><%= match.phasedetail_name || 'All' %></td>
+            <td><%= match.home_team_name %></td>
+            <td><%= match.away_team_name %></td>
+            <td><%= match.ref1_name %></td>
+            <td><%= match.ref2_name %></td>
+            <td><%= match.pair_name %></td>
+            <td><%= match.total_2min %></td>
+            <td><%= match.total_5min %></td>
+            <td><%= match.total_2min_home %></td>
+            <td><%= match.total_2min_away %></td>
+            <td><%= match.total_5min_home %></td>
+            <td><%= match.total_5min_away %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+
+
+
+
+<script>
+  $(document).ready(function() {
+    $('#competitionDetailTable').DataTable({
+      paging: true,
+      searching: true,
+      order: [[3, 'desc']], // sort by matches
+      pageLength: 25
+    });
+  });
+
+
+
+
+
+  // filtering start
+  const matches = <%- JSON.stringify(matches) %>;
+
+const matchesContainer = document.getElementById('matchesList');
+const form = document.getElementById('matchesFilterForm');
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const season = document.getElementById('seasonFilter').value;
+  const phase = document.getElementById('phaseFilter').value;
+  const phasedetail = document.getElementById('phasedetailFilter').value;
+
+  const filtered = matches.filter(m => {
+    return (!season || m.season_id == season)
+        && (!phase || (m.phase_id || 'all') == phase)
+        && (!phasedetail || (m.phasedetail_id || 'all') == phasedetail);
+  });
+
+  renderMatches(filtered);
+});
+
+const matchesTableBody = document.getElementById('matchesTableBody');
+
+function renderMatches(list) {
+  matchesTableBody.innerHTML = '';
+
+  if (!list.length) {
+    matchesTableBody.innerHTML = '<tr><td colspan="11">No matches found for selected filters.</td></tr>';
+    return;
+  }
+
+  list.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><a href="/matches/${m.match_id}">${m.DateTime}</a></td>
+      <td>${m.season_name}</td>
+      <td>${m.phase_name || 'All'}</td>
+      <td>${m.phasedetail_name || 'All'}</td>
+      <td>${m.home_team_name}</td>
+      <td>${m.away_team_name}</td>
+      <td>${m.ref1_name}</td>
+      <td>${m.ref2_name}</td>
+      <td>${m.pair_name}</td>
+      <td>${m.total_2min}</td>
+      <td>${m.total_5min}</td>
+      <td>${m.total_2min_home}</td>
+      <td>${m.total_2min_away}</td>
+      <td>${m.total_5min_home}</td>
+      <td>${m.total_5min_away}</td>
+    `;
+    matchesTableBody.appendChild(tr);
+  });
+}
+
+// Initial render
+renderMatches(matches);
+// filter end
+</script>

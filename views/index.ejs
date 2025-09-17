@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Homepage</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+</head>
+<body>
+  <%- include('partials/navbar') %>
+
+
+<!-- News Section -->
+<div class="container my-5">
+  <h2>Novinky</h2>
+
+  <% 
+    // Helper to truncate content safely
+    function truncateHTML(html, length = 100) {
+      const text = html.replace(/<[^>]+>/g, ''); // remove HTML tags
+      return text.length > length ? text.substring(0, length) + '...' : text;
+    }
+  %>
+
+  <% if (news && news.length > 0) { 
+       const mainPost = news[0];
+       const sidePosts = news.slice(1, 3);
+  %>
+    <div class="row">
+      <!-- Big main news -->
+      <div class="col-md-8 mb-3">
+        <div class="card h-100">
+          <% if (mainPost.banner) { %>
+            <img src="https://beta.kenyschulz.com/referee/api/<%= encodeURIComponent(mainPost.banner) %>"
+                 class="card-img-top"
+                 style="height:400px; object-fit:cover;"
+                 alt="<%= mainPost.title %>">
+          <% } else { %>
+            <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                 style="height:400px;">
+              <h3>No Image</h3>
+            </div>
+          <% } %>
+          <div class="card-body">
+            <h4>
+              <a href="/news/<%= mainPost.id %>" class="text-dark text-decoration-none">
+                <%= mainPost.title %>
+              
+            </h4>
+            <p class="text-muted"><small><%= mainPost.created_at %></small></p>
+            <p><%- truncateHTML(mainPost.content, 150) %></p></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two smaller news -->
+      <div class="col-md-4 d-flex flex-column">
+        <% sidePosts.forEach(post => { %>
+          <div class="card mb-3 flex-fill">
+            <% if (post.banner) { %>
+              <img src="https://beta.kenyschulz.com/referee/api/<%= encodeURIComponent(post.banner) %>"
+                   class="card-img-top"
+                   style="height:190px; object-fit:cover;"
+                   alt="<%= post.title %>">
+            <% } else { %>
+              <div class="bg-secondary text-white d-flex align-items-center justify-content-center"
+                   style="height:190px;">
+                <h5>No Image</h5>
+              </div>
+            <% } %>
+            <div class="card-body">
+              <h6>
+                <a href="/news/<%= post.id %>" class="text-dark text-decoration-none">
+                  <%= post.title %>
+                </a>
+              </h6>
+              <p class="text-muted mb-1"><small><%= post.created_at %></small></p>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } else { %>
+    <p>No news available.</p>
+  <% } %>
+</div>
+
+
+
+  <!-- Global Search -->
+<div class="container mx-auto p-4">
+  <h2>Hledat</h2>
+  <div class="position-relative">
+    <input type="text" id="homepageSearchInput" class="form-control" placeholder="Search the site..." autocomplete="off" />
+    <div id="searchResults" class="list-group position-absolute w-100" style="z-index:1000;"></div>
+  </div>
+</div>
+
+  <!-- Quick Links -->
+  <div class="container mt-5">
+    <h2>Odkazy</h2>
+    <ul class="list-group">
+      <li class="list-group-item"><img src="/images/homeCategories/competition.png" style="max-height: 250px"><a href="/competitions">Soutěže</a></li>
+      <li class="list-group-item"><a href="/seasons">Sezóny</a></li>
+      <li class="list-group-item"><a href="/referees">Rozhodčí</a></li>
+      <li class="list-group-item"><a href="/pairs">Rozhodčí páry</a></li>
+      <li class="list-group-item"><a href="/teams">Týmy</a></li>
+      <li class="list-group-item"><a href="/mutuals">H2H</a></li>
+      <li class="list-group-item"><a href="/phases">Fáze</a></li>
+      <li class="list-group-item"><a href="/phasedetail">Fáza 2</a></li>
+      <li class="list-group-item"><a href="/matches">Zápasy</a></li>
+      <li class="list-group-item"><a href="/referee-stats">Statistiky rozhodčích</a></li>
+      <li class="list-group-item"><a href="/referee-pair-stats">Statistiky rozhodčích páry</a></li>
+      <li class="list-group-item"><a href="/competition-stats">Statistiky soutěží</a></li>
+    </ul>
+  </div>
+
+  <br>
+
+<!-- fixtures -->
+<div class="container mx-auto p-4">
+  <h2 class="text-2xl font-bold mb-4">Nejbližší zápasy</h2>
+
+
+<!-- Competition Filter -->
+<div class="mb-4">
+<select id="competitionSelect">
+  <option value="">All Competitions</option>
+  <% competitions.forEach(c => { %>
+    <option value="<%= c.competition_id %>" <%= c.competition_id === activeCompetition ? 'selected' : '' %>>
+      <%= c.competition_name %>
+    </option>
+  <% }) %>
+</select>
+</div>
+
+  <!-- Upcoming Fixtures Table -->
+  <table id="fixturesTable" class="border-collapse border w-full">
+    <thead class="bg-gray-200">
+      <tr>
+        <th class="border px-2 py-1">Competition</th>
+        <th class="border px-2 py-1">Phase</th>
+        <th class="border px-2 py-1">Zápas</th>
+        <th class="border px-2 py-1">Date & Time</th>
+      </tr>
+    </thead>
+<tbody>
+  <% fixtures.forEach(f => { %>
+    <tr>
+      <td class="border px-2 py-1"><%= f.competition_name %></td>
+<td class="border px-2 py-1">
+  <%= (f.phase_name && f.phase_name !== 'null' ? f.phase_name : '') +
+      (f.phasedetail_name && f.phasedetail_name !== 'null' ? 
+         (f.phase_name && f.phase_name !== 'null' ? ' - ' : '') + f.phasedetail_name 
+         : '') %>
+</td>
+      <td class="border px-2 py-1">
+        <a href="/matches/<%= f.match_id %>"><%= f.home_team %> vs. <%= f.away_team %></a>
+      </td>
+      <td class="border px-2 py-1"><%= new Date(f.DateTime).toLocaleString() %></td>
+    </tr>
+  <% }) %>
+  <% if (fixtures.length === 0) { %>
+    <tr>
+      <td class="border px-2 py-1 text-center" colspan="4">No upcoming fixtures</td>
+    </tr>
+  <% } %>
+</tbody>
+  </table>
+</div>
+
+
+
+
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <script>
+$(document).ready(function() {
+  let timer = null;
+
+  $('#homepageSearchInput').on('input', function() {
+    const query = $(this).val().trim();
+    clearTimeout(timer);
+
+    if (!query) {
+      $('#searchResults').empty();
+      return;
+    }
+
+    // debounce so we don't spam the server
+    timer = setTimeout(() => {
+      $.get(`/search?q=${encodeURIComponent(query)}`, function(res) {
+        const results = res.results || [];
+        if (results.length === 0) {
+          $('#searchResults').html('<div class="list-group-item">No results found</div>');
+          return;
+        }
+
+        let html = '';
+        results.forEach(item => {
+          let label = item.title || item.name;
+          let link = '#';
+          if (item.type === 'news') link = `/news/${item.id}`;
+          else if (item.type === 'referee') link = `/referees/${item.id}`;
+          else if (item.type === 'mutual') link = `/mutuals/${item.id}`;
+          else if (item.type === 'team') link = `/teams/${item.id}`;
+          else if (item.type === 'competition') link = `/competitions/${item.id}`;
+          else if (item.type === 'referee_pair') link = `/pairs/${item.id}`;
+
+          html += `<a href="${link}" class="list-group-item list-group-item-action">
+                    <strong>${item.type}</strong>: ${label}
+                  </a>`;
+        });
+        $('#searchResults').html(html);
+      }).fail(() => {
+        $('#searchResults').html('<div class="list-group-item">Search failed. Try again later.</div>');
+      });
+    }, 300); // debounce 300ms
+  });
+
+  // hide results when clicking outside
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('#homepageSearchInput, #searchResults').length) {
+      $('#searchResults').empty();
+    }
+  });
+
+
+// fetch fixtures
+async function fetchFixtures(competition_id) {
+  const url = `https://beta.kenyschulz.com/referee/api/getfixtures.php?limit=10${competition_id ? `&competition_id=${competition_id}` : ''}`;
+  
+  try {
+    const response = await axios.get(url);
+    const data = response.data.success ? response.data.fixtures : [];
+
+    const tbody = document.querySelector('#fixturesTable tbody');
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr>
+        <td class="border px-2 py-1 text-center" colspan="4">No upcoming fixtures</td>
+      </tr>`;
+    } else {
+      data.forEach(f => {
+        // Safe phase/phasedetail handling
+        const phase = (f.phase_name && f.phase_name !== 'null') ? f.phase_name : '';
+        const phaseDetail = (f.phasedetail_name && f.phasedetail_name !== 'null') ? f.phasedetail_name : '';
+        const phaseText = phase && phaseDetail ? `${phase} - ${phaseDetail}` : (phase || phaseDetail || '');
+
+        tbody.innerHTML += `<tr>
+          <td class="border px-2 py-1">${f.competition_name}</td>
+          <td class="border px-2 py-1">${phaseText}</td>
+          <td class="border px-2 py-1"><a href="/matches/${f.match_id}">${f.home_team} vs. ${f.away_team}</a></td>
+          <td class="border px-2 py-1">${new Date(f.DateTime).toLocaleString()}</td>
+        </tr>`;
+      });
+    }
+  } catch (err) {
+    console.error('Error fetching fixtures:', err);
+  }
+}
+
+// initial load
+fetchFixtures(document.getElementById('competitionSelect').value);
+
+// fetch when competition changes
+document.getElementById('competitionSelect').addEventListener('change', (e) => {
+  console.log('Selected competition_id:', e.target.value);
+  fetchFixtures(e.target.value);
+});
+
+
+
+
+});
+
+  </script>
+</body>
+</html>

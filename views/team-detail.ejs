@@ -1,0 +1,149 @@
+<%- include("partials/navbar") %>
+
+<div class="container mt-4">
+  <h1><%= team.teamName %> Stats</h1>
+
+
+<% if (team.relatedNews && team.relatedNews.length > 0) { %>
+  <% team.relatedNews.forEach(post => { %>
+    <div class="card mb-3 p-2">
+      <h5>
+        <a href="/news/<%= post.id %>" class="text-decoration-none"><%= post.title %></a>
+      </h5>
+      <small class="text-muted"><%= new Date(post.created_at).toLocaleDateString() %></small>
+    </div>
+  <% }) %>
+<% } else { %>
+  <p class="text-muted mt-3">No related news yet.</p>
+<% } %>
+
+
+
+
+
+  <h2>Season-level Stats</h2>
+  <table class="table table-sm table-bordered">
+    <thead>
+      <tr>
+        <th>Competition</th>
+        <th>Season</th>
+        <th>Phase</th>
+        <th>Phase Detail</th>
+        <th>Matches</th>
+        <th>Avg 2min</th>
+        <th>Avg 2min Home</th>
+        <th>Avg 2min Away</th>
+        <th>Avg 5min</th>
+        <th>Avg 5min Home</th>
+        <th>Avg 5min Away</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% team.statsSeason.forEach(s => { %>
+        <tr>
+          <td><%= s.competition_name %></td>
+          <td><%= s.season_name %></td>
+          <td><%= s.phase_name || "All Phases" %></td>
+          <td><%= s.phasedetail_name || "All" %></td>
+          <td><%= s.matches %></td>
+          <td><%= s.avg_2min %></td>
+          <td><%= s.avg_2min_home %></td>
+          <td><%= s.avg_2min_away %></td>
+          <td><%= s.avg_5min %></td>
+          <td><%= s.avg_5min_home %></td>
+          <td><%= s.avg_5min_away %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <h2>Phase-level Stats</h2>
+  <table class="table table-sm table-bordered">
+    <thead>
+      <tr>
+        <th>Competition</th>
+        <th>Season</th>
+        <th>Phase</th>
+        <th>Phase Detail</th>
+        <th>Matches</th>
+        <th>Avg 2min</th>
+        <th>Avg 2min Home</th>
+        <th>Avg 2min Away</th>
+        <th>Avg 5min</th>
+        <th>Avg 5min Home</th>
+        <th>Avg 5min Away</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% team.statsPhase.forEach(p => { %>
+        <tr>
+          <td><%= p.competition_name %></td>
+          <td><%= p.season_name %></td>
+          <td><%= p.phase_name || "All Phases" %></td>
+          <td><%= p.phasedetail_name || "All" %></td>
+          <td><%= p.matches %></td>
+          <td><%= p.avg_2min %></td>
+          <td><%= p.avg_2min_home %></td>
+          <td><%= p.avg_2min_away %></td>
+          <td><%= p.avg_5min %></td>
+          <td><%= p.avg_5min_home %></td>
+          <td><%= p.avg_5min_away %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+
+  <h2>Detailed Stats</h2>
+  <table class="table table-sm table-bordered">
+    <thead>
+      <tr>
+        <th>Competition</th>
+        <th>Season</th>
+        <th>Phase</th>
+        <th>Phase Detail</th>
+        <th>Matches</th>
+        <th>Avg 2min</th>
+        <th>Avg 2min Home</th>
+        <th>Avg 2min Away</th>
+        <th>Avg 5min</th>
+        <th>Avg 5min Home</th>
+        <th>Avg 5min Away</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% team.statsDetail.forEach(pd => { %>
+        <tr>
+          <td><%= pd.competition_name %></td>
+          <td><%= pd.season_name %></td>
+          <td><%= pd.phase_name || "All Phases" %></td>
+          <td><%= pd.phasedetail_name || "All" %></td>
+          <td><%= pd.matches %></td>
+          <td><%= pd.avg_2min %></td>
+          <td><%= pd.avg_2min_home %></td>
+          <td><%= pd.avg_2min_away %></td>
+          <td><%= pd.avg_5min %></td>
+          <td><%= pd.avg_5min_home %></td>
+          <td><%= pd.avg_5min_away %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+
+  <h2>Overall</h2>
+  <ul>
+    <li>Matches: <%= team.overall.matches %></li>
+    <li>Avg 2min: <%= team.overall.avg_2min %></li>
+    <li>Avg 5min: <%= team.overall.avg_5min %></li>
+    <li>Avg 2min Home: <%= team.overall.avg_2min_home %></li>
+    <li>Avg 2min Away: <%= team.overall.avg_2min_away %></li>
+    <li>Avg 5min Home: <%= team.overall.avg_5min_home %></li>
+    <li>Avg 5min Away: <%= team.overall.avg_5min_away %></li>
+    <li>%>5 2min: <%= team.overall.pct_over_5 %></li>
+    <li>%>6 2min: <%= team.overall.pct_over_6 %></li>
+    <!-- Add others -->
+  </ul>
+
+
+</div>

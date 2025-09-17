@@ -1,0 +1,15 @@
+<%- include('partials/navbar') %>
+
+<div class="container mt-4 mb-4">
+  <h1 class="mb-4">Novinky</h1>
+  <ul>
+    <% news.forEach(c => { %>
+      <li>
+        <a href="/news/<%= c.id %>"><%= c.id %> -
+        <%= c.title %> -
+        <%= c.created_at %>
+      </a>
+      </li>
+    <% }) %>
+  </ul>
+</div>

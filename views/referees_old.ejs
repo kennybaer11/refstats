@@ -1,0 +1,310 @@
+<%- include('partials/navbar') %>
+
+<div class="py-4 px-4">
+<!-- Filters -->
+<select id="filter-competition">
+  <option value="">All Competitions</option>
+  <% competitions.forEach(c => { %>
+    <option value="<%= c.competition_id.toLowerCase() %>" <%= competition === c.competition_id.toLowerCase() ? 'selected' : '' %>>
+      <%= c.competition_name %>
+    </option>
+  <% }) %>
+</select>
+
+<select id="filter-season">
+  <option value="">All Seasons</option>
+  <% seasons.forEach(s => { %>
+    <option value="<%= s.id %>" <%= season === s.id ? 'selected' : '' %>><%= s.name %></option>
+  <% }) %>
+</select>
+
+<select id="filter-phase">
+  <option value="">All Phases</option>
+  <% phases.forEach(p => { %>
+    <option value="<%= p.phase_id %>" <%= phase === p.phase_id ? 'selected' : '' %>>
+      <%= p.phase_name %>
+    </option>
+  <% }) %>
+</select>
+
+<select id="filter-phase-detail">
+  <option value="">All Phase Details</option>
+  <% phaseDetails.forEach(pd => { %>
+    <option value="<%= pd.phase_detail_id %>" <%= phaseDetail === pd.phase_detail_id ? 'selected' : '' %>>
+      <%= pd.phase_detail_name %>
+    </option>
+  <% }) %>
+</select>
+
+<input type="text" id="filter-referee" placeholder="Search referee">
+
+<input type="number" id="filter-min-matches" placeholder="Min Matches" min="0">
+
+<input type="number" id="filter-min-avg2" placeholder="Min Avg 2min" min="0" step="0.01">
+<input type="number" id="filter-max-avg2" placeholder="Max Avg 2min" min="0" step="0.01">
+
+<input type="number" id="filter-min-avg5" placeholder="Min Avg 5min" min="0" step="0.01">
+<input type="number" id="filter-max-avg5" placeholder="Max Avg 5min" min="0" step="0.01">
+
+<div class="mb-3">
+  <button id="toggle-singles" class="btn btn-primary btn-sm">Singles</button>
+  <button id="toggle-pairs" class="btn btn-secondary btn-sm">Pairs</button>
+</div>
+
+<!-- Table -->
+<table id="referee-table" class="table table-striped table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Matches</th>
+      <th>2min</th>
+      <th>5min</th>
+      <th>Total</th>
+      <th>Avg 2min</th>
+      <th>Avg 5min</th>
+    </tr>
+  </thead>
+  <tbody id="referee-tbody"></tbody>
+</table>
+</div>
+
+<!-- Pairs Table -->
+<table id="pairs-table" class="table table-striped table-bordered table-hover" style="display:none;">
+  <thead>
+    <tr>
+      <th>Pair Name</th>
+      <th>Matches</th>
+      <th>2min</th>
+      <th>5min</th>
+      <th>Total</th>
+      <th>Avg 2min</th>
+      <th>Avg 5min</th>
+    </tr>
+  </thead>
+  <tbody id="pairs-tbody"></tbody>
+</table>
+
+
+<script>
+ let refereesData = <%- JSON.stringify(referees) %>;
+  let pairsData = <%- JSON.stringify(pairs) %>;
+  const seasonMapByCompetition = <%- JSON.stringify(typeof seasonMapByCompetition !== 'undefined' ? seasonMapByCompetition : {}) %>;
+
+
+  const competitionSelect = document.getElementById('filter-competition');
+  const seasonSelect = document.getElementById('filter-season');
+  const phaseSelect = document.getElementById('filter-phase');
+  const phaseDetailSelect = document.getElementById('filter-phase-detail');
+  const refereeInput = document.getElementById('filter-referee');
+  const minMatchesInput = document.getElementById('filter-min-matches');
+  const minAvg2Input = document.getElementById('filter-min-avg2');
+  const maxAvg2Input = document.getElementById('filter-max-avg2');
+  const minAvg5Input = document.getElementById('filter-min-avg5');
+  const maxAvg5Input = document.getElementById('filter-max-avg5');
+  const toggleSingles = document.getElementById('toggle-singles');
+  const togglePairs = document.getElementById('toggle-pairs');
+  const refereeTable = document.getElementById('referee-table');
+  const pairsTable = document.getElementById('pairs-table');
+  const tbody = document.getElementById('referee-tbody');
+  const pairsTbody = document.getElementById('pairs-tbody');
+
+  let showingSingles = true;
+  let sortColumn = null;
+  let sortDirection = 'asc';
+
+  // Toggle buttons
+  toggleSingles.addEventListener('click', () => {
+    showingSingles = true;
+    refereeTable.style.display = '';
+    pairsTable.style.display = 'none';
+    toggleSingles.classList.add('btn-primary');
+    togglePairs.classList.remove('btn-primary');
+    renderTable();
+  });
+
+  togglePairs.addEventListener('click', () => {
+    showingSingles = false;
+    refereeTable.style.display = 'none';
+    pairsTable.style.display = '';
+    togglePairs.classList.add('btn-primary');
+    toggleSingles.classList.remove('btn-primary');
+    renderPairsTable();
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+function updateSelect(selectElem, options, idField, nameField, currentValue) {
+  selectElem.innerHTML = '<option value="">All</option>';
+  options.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o[idField];
+    opt.textContent = o[nameField];
+    opt.selected = o[idField].toString() === currentValue;
+    selectElem.appendChild(opt);
+  });
+}
+
+async function fetchFiltersAndData() {
+  const params = new URLSearchParams();
+  if (competitionSelect.value) params.set('competition', competitionSelect.value);
+  if (seasonSelect.value) params.set('season', seasonSelect.value);
+  if (phaseSelect.value) params.set('phase', phaseSelect.value);
+  if (phaseDetailSelect.value) params.set('phase_detail', phaseDetailSelect.value);
+  params.set('ajax', '1');
+
+  const res = await fetch(`/referees?${params}`);
+  const data = await res.json();
+
+  updateSelect(competitionSelect, data.competitions, 'competition_id', 'competition_name', competitionSelect.value);
+  updateSelect(seasonSelect, data.seasons, 'season_id', 'season_name', seasonSelect.value);
+  updateSelect(phaseSelect, data.phases, 'phase_id', 'phase_name', phaseSelect.value);
+  updateSelect(phaseDetailSelect, data.phaseDetails, 'phasedetail_id', 'phasedetail_name', phaseDetailSelect.value);
+
+  refereesData = data.referees || [];
+  pairsData = data.pairs || [];
+  renderTable();
+  renderPairsTable();
+  updateUrl();
+}
+
+competitionSelect.addEventListener('change', fetchFiltersAndData);
+seasonSelect.addEventListener('change', fetchFiltersAndData);
+phaseSelect.addEventListener('change', fetchFiltersAndData);
+phaseDetailSelect.addEventListener('change', fetchFiltersAndData);
+
+
+
+
+
+
+
+
+
+
+  // Render singles table
+  function renderTable() {
+    const nameFilter = refereeInput.value.toLowerCase();
+    const minMatches = parseFloat(minMatchesInput.value) || 0;
+    const minAvg2 = parseFloat(minAvg2Input.value) || 0;
+    const maxAvg2 = parseFloat(maxAvg2Input.value) || Infinity;
+    const minAvg5 = parseFloat(minAvg5Input.value) || 0;
+    const maxAvg5 = parseFloat(maxAvg5Input.value) || Infinity;
+
+    let filtered = refereesData.filter(r => {
+      const nameMatch = !nameFilter || r.fullname.toLowerCase().includes(nameFilter);
+      const matchesMatch = r.matches >= minMatches;
+      const avg2 = parseFloat(r.avg_2min);
+      const avg5 = parseFloat(r.avg_5min);
+      const avg2Match = avg2 >= minAvg2 && avg2 <= maxAvg2;
+      const avg5Match = avg5 >= minAvg5 && avg5 <= maxAvg5;
+      return nameMatch && matchesMatch && avg2Match && avg5Match;
+    });
+
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let valA = a[sortColumn];
+        let valB = b[sortColumn];
+        const numA = parseFloat(valA);
+        const numB = parseFloat(valB);
+        const isNumeric = !isNaN(numA) && !isNaN(numB);
+
+        if (isNumeric) {
+          return sortDirection === 'asc' ? numA - numB : numB - numA;
+        } else {
+          return sortDirection === 'asc'
+            ? String(valA).localeCompare(String(valB))
+            : String(valB).localeCompare(String(valA));
+        }
+      });
+    }
+
+    tbody.innerHTML = '';
+    filtered.forEach(r => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><a href="/referee/${r.referee_id}">${r.fullname}</a></td>
+        <td>${r.matches}</td>
+        <td>${r.total_2min}</td>
+        <td>${r.total_5min}</td>
+        <td>${r.total_penalties}</td>
+        <td>${r.avg_2min}</td>
+        <td>${r.avg_5min}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Render pairs table
+  function renderPairsTable() {
+    pairsTbody.innerHTML = '';
+    pairsData.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${p.fullname}</td>
+        <td>${p.matches}</td>
+        <td>${p.total_2min}</td>
+        <td>${p.total_5min}</td>
+        <td>${p.total_penalties}</td>
+        <td>${p.avg_2min}</td>
+        <td>${p.avg_5min}</td>
+      `;
+      pairsTbody.appendChild(row);
+    });
+  }
+
+  // Update URL without reload
+  function updateUrl() {
+    const params = new URLSearchParams();
+    if (competitionSelect.value) params.set('competition', competitionSelect.value);
+    if (seasonSelect.value) params.set('season', seasonSelect.value);
+    if (phaseSelect.value) params.set('phase', phaseSelect.value);
+    if (phaseDetailSelect.value) params.set('phase_detail', phaseDetailSelect.value);
+    if (refereeInput.value) params.set('referee', refereeInput.value);
+    if (minMatchesInput.value) params.set('minMatches', minMatchesInput.value);
+    if (minAvg2Input.value) params.set('minAvg2', minAvg2Input.value);
+    if (maxAvg2Input.value) params.set('maxAvg2', maxAvg2Input.value);
+    if (minAvg5Input.value) params.set('minAvg5', minAvg5Input.value);
+    if (maxAvg5Input.value) params.set('maxAvg5', maxAvg5Input.value);
+    history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
+  }
+
+  // Event listeners
+  refereeInput.addEventListener('input', () => { renderTable(); updateUrl(); });
+  minMatchesInput.addEventListener('input', () => { renderTable(); updateUrl(); });
+  minAvg2Input.addEventListener('input', () => { renderTable(); updateUrl(); });
+  maxAvg2Input.addEventListener('input', () => { renderTable(); updateUrl(); });
+  minAvg5Input.addEventListener('input', () => { renderTable(); updateUrl(); });
+  maxAvg5Input.addEventListener('input', () => { renderTable(); updateUrl(); });
+
+  // Sorting on column header click
+  document.querySelectorAll('#referee-table thead th').forEach((th, index) => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      const colMap = ['fullname', 'matches', 'total_2min', 'total_5min', 'total_penalties', 'avg_2min', 'avg_5min'];
+      const column = colMap[index];
+
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+      renderTable();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', renderTable);
+
+</script>
+
+<script src="/js/referees.js"></script>

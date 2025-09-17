@@ -1,0 +1,115 @@
+<%- include('partials/navbar') %>
+
+<div class="container mt-4">
+  <h1>Manage Comments</h1>
+
+  <% if (comments.length > 0) { %>
+    <form id="bulk-form">
+      <div class="mb-3">
+        <button type="button" class="btn btn-success btn-sm" id="bulk-approve">Approve Selected</button>
+        <button type="button" class="btn btn-warning btn-sm" id="bulk-disapprove">Disapprove Selected</button>
+        <button type="button" class="btn btn-danger btn-sm" id="bulk-delete">Delete Selected</button>
+      </div>
+
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>ID</th>
+            <th>Referee ID</th>
+            <th>User</th>
+            <th>Comment</th>
+            <th>Rating</th>
+            <th>Approved</th>
+            <th>Ip</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% comments.forEach(c => { %>
+            <tr>
+              <td><input type="checkbox" class="comment-checkbox" value="<%= c.comment_id %>"></td>
+              <td><%= c.comment_id %></td>
+              <td><a href="/referees/<%= c.referee_id %>"><%= c.referee_id %></a></td>
+              <td><%= c.user_name || 'Anonymous' %></td>
+              <td><%= c.comment %></td>
+              <td><%= c.rating %></td>
+              <td><%= c.approved %></td>
+              <td><%= c.ip_address %></td>
+              <td>
+                <% if (!c.approved) { %>
+                  <button type="button" class="btn btn-success btn-sm single-approve" data-id="<%= c.comment_id %>">Approve</button>
+                <% } else { %>
+                  <button type="button" class="btn btn-warning btn-sm single-disapprove" data-id="<%= c.comment_id %>">Disapprove</button>
+                <% } %>
+                <button type="button" class="btn btn-danger btn-sm single-delete" data-id="<%= c.comment_id %>">Delete</button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </form>
+  <% } else { %>
+    <p>No comments found.</p>
+  <% } %>
+</div>
+
+<script>
+  
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.comment-checkbox:checked')).map(cb => cb.value);
+}
+
+// Send action to backend
+async function performAction(ids, action, approved = null) {
+  if (!ids.length) return alert('No comments selected.');
+
+  const body = { ids, action };
+  if (approved !== null) body.approved = approved;
+
+  try {
+    const res = await fetch('/admin/bulk-comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      alert('Action completed successfully.');
+      location.reload();
+    } else {
+      alert('Error: ' + (result.error || 'Unknown error'));
+    }
+  } catch (err) {
+    alert('Request failed.');
+  }
+}
+
+// Bulk buttons
+document.getElementById('select-all')?.addEventListener('change', e => {
+  document.querySelectorAll('.comment-checkbox').forEach(cb => cb.checked = e.target.checked);
+});
+document.getElementById('bulk-approve')?.addEventListener('click', () => performAction(getSelectedIds(), 'approve', 1));
+document.getElementById('bulk-disapprove')?.addEventListener('click', () => performAction(getSelectedIds(), 'disapprove', 0));
+document.getElementById('bulk-delete')?.addEventListener('click', () => {
+  if (confirm('Are you sure you want to delete selected comments?')) {
+    performAction(getSelectedIds(), 'delete');
+  }
+});
+
+// Single buttons
+document.querySelectorAll('.single-approve').forEach(btn =>
+  btn.addEventListener('click', () => performAction([btn.dataset.id], 'approve', 1))
+);
+document.querySelectorAll('.single-disapprove').forEach(btn =>
+  btn.addEventListener('click', () => performAction([btn.dataset.id], 'disapprove', 0))
+);
+document.querySelectorAll('.single-delete').forEach(btn =>
+  btn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete this comment?')) {
+      performAction([btn.dataset.id], 'delete');
+    }
+  })
+);
+</script>

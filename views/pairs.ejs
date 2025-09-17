@@ -1,0 +1,12 @@
+<%- include('partials/navbar') %>
+
+<div class="container mb-4 mt-4">
+  <h1 class="mb-4">Rozhodčí páry</h1>
+  <ul>
+    <% pairs.forEach(c => { %>
+      <li>
+        <a href="/pairs/<%= c.pair_id %>"><%= c.pair_name %></a>
+      </li>
+    <% }) %>
+  </ul>
+</div>

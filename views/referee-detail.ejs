@@ -1,0 +1,364 @@
+<%- include('partials/navbar') %>
+
+<div class="container mt-4">
+  <h1 class="mb-4"><%= referee.referee_name %></h1>
+  
+
+
+<!-- Referee news -->
+ <div class="mb-4">
+<% if (referee.relatedNews && referee.relatedNews.length > 0) { %>
+  <% referee.relatedNews.forEach(post => { %>
+    <div class="card mb-3">
+      <h5><a href="/news/<%= post.id %>"><%= post.title %></a></h5>
+      <small><%= post.created_at %></small>
+    </div>
+  <% }) %>
+<% } else { %>
+  <p>Zatím žádné zprávy.</p>
+<% } %>
+</div>
+
+
+
+<!-- COMMENTS -->
+<h2>Komentáře a hodnocení</h2>
+<% if (referee.comments && referee.comments.length > 0) { %>
+  <ul class="list-group">
+    <% referee.comments.forEach(comment => { %>
+      <li class="list-group-item">
+        <strong><%= comment.user_name %></strong>
+        <span class="text-warning">
+          <% for (let i = 0; i < comment.rating; i++) { %>★<% } %>
+        </span>
+        <p><%= comment.comment %></p>
+        <small class="text-muted"><%= comment.created_at %></small>
+      </li>
+    <% }) %>
+  </ul>
+<% } else { %>
+  <p>Zatím žádné komentáře</p>
+<% } %>
+
+<!-- Toggle Comment Form Button -->
+<button id="showCommentFormBtn" class="btn btn-secondary mb-3 mt-2">
+  Přidat komentář / hodnocení
+</button>
+
+<!-- COMMENTS Post (initially hidden) -->
+<div id="commentFormContainer" style="display: none;">
+  <h4 class="mt-2">Přidat komentář/hodnocení</h4>
+  <form id="commentForm" class="mb-4">
+    <input type="hidden" name="referee_id" value="<%= referee.referee_id %>">
+
+    <div class="mb-3">
+      <label class="form-label">Vaše jméno</label>
+      <input type="text" name="user_name" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Hodnocení</label>
+      <select name="rating" class="form-select" required>
+        <option value="">Vybrat...</option>
+        <option value="1">★☆☆☆☆</option>
+        <option value="2">★★☆☆☆</option>
+        <option value="3">★★★☆☆</option>
+        <option value="4">★★★★☆</option>
+        <option value="5">★★★★★</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Komentář</label>
+      <textarea name="comment" class="form-control" rows="3" required></textarea>
+    </div>
+
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="consentCheck" required>
+      <label class="form-check-label" for="consentCheck">
+        Souhlasím se zveřejněním mého komentáře i jména.
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Odeslat</button>
+  </form>
+  <div id="commentMessage" class="mt-2 mb-4"></div>
+</div>
+
+
+
+
+  <% for (let compId in referee.competitions) { 
+       const comp = referee.competitions[compId]; %>
+
+    <h2><%= comp.competition_name %></h2>
+
+    <!-- Phase filter -->
+    <div class="mb-2">
+      <label>Phase:
+        <select class="form-select form-select-sm phase-filter" data-comp="<%= compId %>">
+          <% 
+          let allPhases = [];
+          for (let seasonId in comp.seasons) {
+            const phases = Object.values(comp.seasons[seasonId].phases).filter(p => p.phase_id); // exclude all_phases
+            phases.forEach(p => {
+              if (!allPhases.find(x => x.phase_id === p.phase_id)) allPhases.push(p);
+            });
+          }
+          %>
+          <option value="">All phases</option>
+          <% allPhases.forEach(p => { %>
+            <option value="<%= p.phase_id %>"><%= p.phase_name %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
+
+    <!-- Competition stats table -->
+    <table class="table table-striped" id="table-<%= compId %>">
+      <thead>
+        <tr>
+          <th>Season</th>
+          <th>Matches</th>
+          <th>Avg 2min</th>
+          <th>Avg 5min</th>
+          <th>2min Home</th>
+          <th>2min Away</th>
+          <th>5min Home</th>
+          <th>5min Away</th>
+          <th>% >5</th>
+          <th>% >6</th>
+          <th>% >7</th>
+          <th>% >8</th>
+          <th>% >9</th>
+          <th>% >10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (let seasonId in comp.seasons) { %>
+          <tr data-season="<%= seasonId %>">
+            <td><%= comp.seasons[seasonId].season_name %></td>
+            <td colspan="13">Loading...</td>
+          </tr>
+        <% } %>
+      </tbody>
+      <% if (comp.career) { %>
+      <tfoot>
+        <tr class="table-secondary">
+          <td><strong>Career totals</strong></td>
+          <td><%= comp.career.matches %></td>
+          <td><%= comp.career.avg_2min %></td>
+          <td><%= comp.career.avg_5min %></td>
+          <td><%= comp.career.avg_2min_home %></td>
+          <td><%= comp.career.avg_2min_away %></td>
+          <td><%= comp.career.avg_5min_home %></td>
+          <td><%= comp.career.avg_5min_away %></td>
+          <td><%= comp.career.pct_over_5 %></td>
+          <td><%= comp.career.pct_over_6 %></td>
+          <td><%= comp.career.pct_over_7 %></td>
+          <td><%= comp.career.pct_over_8 %></td>
+          <td><%= comp.career.pct_over_9 %></td>
+          <td><%= comp.career.pct_over_10 %></td>
+        </tr>
+      </tfoot>
+      <% } %>
+    </table>
+
+  <% } %>
+
+  <!-- Matches Table -->
+  <h2>Matches Officiated</h2>
+  <table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Competition</th>
+        <th>Home Team</th>
+        <th>Away Team</th>
+        <th>2min</th>
+        <th>5min</th>
+        <th>2min Home</th>
+        <th>2min Away</th>
+        <th>5min Home</th>
+        <th>5min Away</th>
+        <th>Ref 1</th>
+        <th>Ref 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (referee.matches && referee.matches.length) { %>
+        <% referee.matches.forEach(match => { %>
+          <tr>
+            <td><a href="/matches/<%= match.match_id %>"><%= match.DateTime %></a></td>
+            <td><%= match.competition_name %></td>
+            <td><%= match.home_team_name %></td>
+            <td><%= match.away_team_name %></td>
+            <td><%= match.total_2min %></td>
+            <td><%= match.total_5min %></td>
+            <td><%= match.total_2min_home %></td>
+            <td><%= match.total_2min_away %></td>
+            <td><%= match.total_5min_home %></td>
+            <td><%= match.total_5min_away %></td>
+            <td><%= match.ref1_name %></td>
+            <td><%= match.ref2_name %></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="9">No matches found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+
+<script>
+
+  // toggle comment
+ const toggleBtn = document.getElementById('showCommentFormBtn');
+const formContainer = document.getElementById('commentFormContainer');
+
+toggleBtn.addEventListener('click', () => {
+  if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+    formContainer.style.display = 'block';
+    toggleBtn.textContent = 'Skrýt formulář';
+  } else {
+    formContainer.style.display = 'none';
+    toggleBtn.textContent = 'Přidat komentář / hodnocení';
+  }
+});
+
+//comments
+document.getElementById('commentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const form = e.target;
+  const messageDiv = document.getElementById('commentMessage'); // add this div under your form
+
+  // extra validation
+  if (!form.consentCheck.checked) {
+    messageDiv.style.color = "red";
+    messageDiv.textContent = "You must agree before submitting.";
+    return;
+  }
+
+  const data = {
+    referee_id: form.referee_id.value,
+    user_name: form.user_name.value || "Anonymous",
+    rating: form.rating.value,
+    comment: form.comment.value
+  };
+
+  try {
+    const res = await fetch('https://beta.kenyschulz.com/referee/api/upload-refereecomment.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.status === 429) {
+      const result = await res.json();
+      messageDiv.style.color = "red";
+      messageDiv.textContent = result.error || "You can only post one comment every 30 minutes.";
+      return;
+    }
+
+    const result = await res.json();
+    console.log("Server response:", result);
+
+    if (result.success) {
+      messageDiv.style.color = "green";
+      messageDiv.textContent = "Comment submitted! Awaiting approval.";
+      form.reset();
+    } else {
+      messageDiv.style.color = "red";
+      messageDiv.textContent = "Error: " + (result.error || "Unknown error");
+    }
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    messageDiv.style.color = "red";
+    messageDiv.textContent = "Network error. Could not submit comment.";
+  }
+});
+
+
+//stats
+(function() {
+  const competitions = <%- JSON.stringify(referee.competitions) %>;
+
+  for (const compId in competitions) {
+    const comp = competitions[compId];
+    const compData = comp.seasons;
+    const careerPhases = comp.career_phases;
+    const careerTotals = comp.career;
+
+    const table = document.getElementById(`table-${compId}`);
+    const tbodyRows = Array.from(table.querySelectorAll("tbody tr"));
+    const select = document.querySelector(`.phase-filter[data-comp="${compId}"]`);
+    const tfootRow = table.querySelector("tfoot tr");
+
+    function formatNumber(num, decimals = 1) {
+      if (num === null || num === undefined) return '-';
+      return typeof num === 'number' ? num.toFixed(decimals) : parseFloat(num).toFixed(decimals);
+    }
+
+    function formatInt(num) {
+      return Math.round(num);
+    }
+
+    function updateTable(phaseId) {
+      tbodyRows.forEach(row => {
+        const seasonId = row.dataset.season;
+        const season = compData[seasonId];
+        let phase;
+        if (!phaseId) {
+          phase = season.phases.all_phases;
+        } else {
+          const phasesArray = Object.values(season.phases).filter(p => p.phase_id === phaseId);
+          phase = phasesArray[0];
+        }
+        if (!phase) { row.style.display = "none"; return; }
+        row.style.display = "";
+        row.innerHTML = `
+          <td>${season.season_name}</td>
+          <td>${formatInt(phase.matches)}</td>
+          <td>${formatNumber(phase.avg_2min)}</td>
+          <td>${formatNumber(phase.avg_5min)}</td>
+          <td>${formatNumber(phase.avg_2min_home)}</td>
+          <td>${formatNumber(phase.avg_2min_away)}</td>
+          <td>${formatNumber(phase.avg_5min_home)}</td>
+          <td>${formatNumber(phase.avg_5min_away)}</td>
+          <td>${formatInt(phase.pct_over_5)}</td>
+          <td>${formatInt(phase.pct_over_6)}</td>
+          <td>${formatInt(phase.pct_over_7)}</td>
+          <td>${formatInt(phase.pct_over_8)}</td>
+          <td>${formatInt(phase.pct_over_9)}</td>
+          <td>${formatInt(phase.pct_over_10)}</td>
+        `;
+      });
+
+      if (tfootRow) {
+        const totals = phaseId ? careerPhases[phaseId] : careerTotals;
+        tfootRow.innerHTML = `
+          <td><strong>${phaseId ? totals.phase_name : "Career totals"}</strong></td>
+          <td>${formatInt(totals.matches)}</td>
+          <td>${formatNumber(totals.avg_2min)}</td>
+          <td>${formatNumber(totals.avg_5min)}</td>
+          <td>${formatNumber(totals.avg_2min_home)}</td>
+          <td>${formatNumber(totals.avg_2min_away)}</td>
+          <td>${formatNumber(totals.avg_5min_home)}</td>
+          <td>${formatNumber(totals.avg_5min_away)}</td>
+          <td>${formatInt(totals.pct_over_5)}</td>
+          <td>${formatInt(totals.pct_over_6)}</td>
+          <td>${formatInt(totals.pct_over_7)}</td>
+          <td>${formatInt(totals.pct_over_8)}</td>
+          <td>${formatInt(totals.pct_over_9)}</td>
+          <td>${formatInt(totals.pct_over_10)}</td>
+        `;
+      }
+    }
+
+    select.addEventListener("change", () => updateTable(select.value));
+    updateTable(select.value);
+  }
+})();
+</script>

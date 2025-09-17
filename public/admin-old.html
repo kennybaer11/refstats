@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    form { margin-bottom: 1.5rem; }
+    #news-form { display: none; }
+  </style>
+  <!-- Quill CSS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<!-- Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+
+  <div id="login-form">
+    <h2>Login</h2>
+    <form id="login">
+      <input type="text" name="username" placeholder="Username" required><br><br>
+      <input type="password" name="password" placeholder="Password" required><br><br>
+      <button type="submit">Login</button>
+    </form>
+    <p id="login-error" style="color: red;"></p>
+  </div>
+
+  <div id="news-form">
+  <h2>Add News</h2>
+  <form id="add-news">
+    <input type="text" name="title" placeholder="News Title" required><br><br>
+    
+    <!-- Quill editor container -->
+    <div id="editor" style="height: 150px;"></div>
+    
+    <!-- Hidden textarea to store Quill content -->
+    <textarea name="content" id="content" style="display:none;"></textarea><br><br>
+    
+    <button type="submit">Post News</button>
+  </form>
+  <p id="news-status"></p>
+  <button onclick="logout()">Logout</button>
+</div>
+
+    <!-- COMMENT MODERATION -->
+  <div id="moderation-section">
+    <h2>Moderate Comments</h2>
+    <table id="comments-table">
+      <thead>
+        <tr>
+          <th>Referee ID</th>
+          <th>User</th>
+          <th>Comment</th>
+          <th>Rating</th>
+          <th>Created</th>
+          <th>Approved?</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+   const loginForm = document.getElementById('login');
+    const newsForm = document.getElementById('add-news');
+    const loginDiv = document.getElementById('login-form');
+    const newsDiv = document.getElementById('news-form');
+    const moderationDiv = document.getElementById('moderation-section');
+    const commentsTableBody = document.querySelector('#comments-table tbody');
+
+    function checkLogin() {
+      fetch('/admin/check-auth')
+        .then(res => res.json())
+        .then(data => {
+          if (data.loggedIn) {
+            loginDiv.style.display = 'none';
+            newsDiv.style.display = 'block';
+            moderationDiv.style.display = 'block';
+            loadPendingComments();
+          } else {
+            loginDiv.style.display = 'block';
+            newsDiv.style.display = 'none';
+            moderationDiv.style.display = 'none';
+          }
+        });
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(loginForm);
+      const payload = {
+        username: formData.get('username'),
+        password: formData.get('password')
+      };
+
+      const res = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        checkLogin();
+      } else {
+        document.getElementById('login-error').innerText = result.error;
+      }
+    });
+
+
+  // Initialize Quill editor
+  var quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write your news here...',
+    modules: {
+      toolbar: [
+        ['bold', 'italic', 'underline'],        // basic formatting
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link']
+      ]
+    }
+  });
+  
+// add news
+const status = document.getElementById('news-status');
+
+newsForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Copy Quill content into the hidden textarea
+  const content = quill.root.innerHTML;
+
+  const formData = new FormData(newsForm);
+  const payload = {
+    title: formData.get('title'),
+    content: content // use Quill HTML
+  };
+
+  try {
+    const res = await fetch('/admin/add-news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      status.innerText = `✅ News posted with ID ${result.id}`;
+      newsForm.reset();
+      quill.setContents([]); // clear Quill editor
+    } else {
+      status.innerText = `❌ Error: ${result.error}`;
+    }
+  } catch (err) {
+    status.innerText = `❌ Network error: ${err.message}`;
+  }
+});
+//add news end
+
+    function logout() {
+      fetch('/admin/logout', { method: 'POST' })
+        .then(() => checkLogin());
+    }
+
+    // Load unapproved comments
+    function loadPendingComments() {
+      fetch('/referee/api/get-table.php?table=referee_comments')
+        .then(res => res.json())
+        .then(comments => {
+          commentsTableBody.innerHTML = '';
+          comments.forEach(c => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${c.referee_id}</td>
+              <td>${c.user_name || 'Anonymous'}</td>
+              <td>${c.comment}</td>
+              <td>${c.rating}</td>
+              <td>${c.created_at}</td>
+              <td>${c.approved == 1 ? '✅' : '❌'}</td>
+              <td>
+                <button onclick="approveComment(${c.comment_id})">Approve</button>
+                <button onclick="deleteComment(${c.comment_id})">Delete</button>
+              </td>
+            `;
+            commentsTableBody.appendChild(row);
+          });
+        });
+    }
+
+    // Approve comment
+    function approveComment(id) {
+      fetch(`/admin/approve-comment/${id}`, { method: 'POST' })
+        .then(() => loadPendingComments());
+    }
+
+    // Delete comment
+    function deleteComment(id) {
+      if (confirm('Are you sure you want to delete this comment?')) {
+        fetch(`/admin/delete-comment/${id}`, { method: 'DELETE' })
+          .then(() => loadPendingComments());
+      }
+    }
+
+    checkLogin(); // Check on page load
+  </script>
+</body>
+</html>

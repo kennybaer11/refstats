@@ -1,0 +1,12 @@
+<%- include('partials/navbar') %>
+
+<div class="container">
+  <h1>Soutěže</h1>
+  <ul>
+    <% competitions.forEach(c => { %>
+      <li>
+        <a href="/competitions/<%= c.competition_id %>"><%= c.competition_name %></a>
+      </li>
+    <% }) %>
+  </ul>
+</div>
