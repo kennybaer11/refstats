@@ -1,9 +1,9 @@
 <%- include("partials/navbar") %>
 
 <div class="container mt-4">
-  <h1><%= team.teamName %> Stats</h1>
+  <h1 class="mb-4"><%= team.name %></h1>
 
-
+<h2>Novinky</h2>
 <% if (team.relatedNews && team.relatedNews.length > 0) { %>
   <% team.relatedNews.forEach(post => { %>
     <div class="card mb-3 p-2">
@@ -21,7 +21,7 @@
 
 
 
-  <h2>Season-level Stats</h2>
+  <h2>Statistika sezóna</h2>
   <table class="table table-sm table-bordered">
     <thead>
       <tr>
@@ -57,7 +57,7 @@
     </tbody>
   </table>
 
-  <h2>Phase-level Stats</h2>
+  <h2>Statistiky fáze</h2>
   <table class="table table-sm table-bordered">
     <thead>
       <tr>
@@ -94,7 +94,7 @@
   </table>
 
 
-  <h2>Detailed Stats</h2>
+  <h2>Statistiky fáze detail</h2>
   <table class="table table-sm table-bordered">
     <thead>
       <tr>
@@ -131,7 +131,7 @@
   </table>
 
 
-  <h2>Overall</h2>
+  <h2>Celkově</h2>
   <ul>
     <li>Matches: <%= team.overall.matches %></li>
     <li>Avg 2min: <%= team.overall.avg_2min %></li>
@@ -146,4 +146,70 @@
   </ul>
 
 
+
+
+<h2 class="mb-4">Zápasy týmu</h2>
+<table id="teamMatchesTable" class="display" style="width:100%">
+  <thead>
+    <tr>
+      <th>Soutěž</th>
+      <th>Sezóna</th>
+      <th>Fáze</th>
+      <th>Detail fáze</th>
+      <th>Domácí vs. Hosté</th>
+      <th>Datum</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% team.matches.forEach(m => { %>
+      <tr>
+        <td><%= m.competition_name %></td>
+        <td><%= m.season_name %></td>
+        <td><%= m.phase_name %></td>
+        <td><%= m.phasedetail_name %></td>
+        <td><a href="/matches/<%= m.match_id %>"><%= m.home_team %> vs. <%= m.away_team %></a></td>
+        <td><%= new Date(m.DateTime).toISOString().slice(0,10) %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+
+
+
 </div>
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+  $('#teamMatchesTable').DataTable({
+    paging: true,
+    searching: true,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[5, 'desc']], // default sort by date
+    language: {
+      search: "Hledat:",
+      lengthMenu: "Zobrazit _MENU_ záznamů",
+      info: "Zobrazuji _START_ až _END_ z _TOTAL_ záznamů",
+      infoEmpty: "Žádné záznamy k dispozici",
+      infoFiltered: "(filtrováno z _MAX_ celkových záznamů)",
+      zeroRecords: "Nenalezeny žádné odpovídající záznamy",
+      emptyTable: "Žádná data v tabulce",
+      paginate: {
+        first: "První",
+        last: "Poslední",
+        next: "Další",
+        previous: "Předchozí"
+      }
+    }
+  });
+});
+</script>

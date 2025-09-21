@@ -1,13 +1,61 @@
 <%- include('partials/navbar') %>
 
-<div class="container">
-  <h1>Týmy</h1>
-  <ul>
-    <% teams.forEach(c => { %>
-      <li>
-        <a href="/teams/<%= c.team_id %>"><%= c.team_name %></a>
-        <img src="<%= c.team_logo %>" style="max-height: 20px">
-      </li>
-    <% }) %>
-  </ul>
+<div class="container mt-4">
+  <h1 class="mb-4">Týmy</h1>
+
+  <table id="teamsTable" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Logo</th>
+        <th>Název týmu</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% teams.forEach(c => { %>
+        <tr>
+          <td class="text-center">
+            <img src="<%= c.team_logo %>" style="max-height: 30px"></td>
+        <td>
+            <a href="/teams/<%= c.team_id %>"><%= c.team_name %></a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
 </div>
+
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $('#teamsTable').DataTable({
+    paging: true,
+    searching: true,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[0, 'asc']], // Sort alphabetically by team name (column index 1)
+        language: {
+      search: "Hledat:",
+      lengthMenu: "Zobrazit _MENU_ záznamů",
+      info: "Zobrazuji _START_ až _END_ z _TOTAL_ záznamů",
+      infoEmpty: "Žádné záznamy k dispozici",
+      infoFiltered: "(filtrováno z _MAX_ celkových záznamů)",
+      zeroRecords: "Nenalezeny žádné odpovídající záznamy",
+      emptyTable: "Žádná data v tabulce",
+      paginate: {
+        first: "První",
+        last: "Poslední",
+        next: "Další",
+        previous: "Předchozí"
+      },
+      aria: {
+        sortAscending: ": aktivujte pro řazení sloupce vzestupně",
+        sortDescending: ": aktivujte pro řazení sloupce sestupně"
+      }
+    }
+  });
+});
+</script>

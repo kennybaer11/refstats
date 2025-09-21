@@ -20,15 +20,18 @@ exports.showTeam = async (req, res) => {
 
   const statsApiUrl = `https://beta.kenyschulz.com/referee/api/getteamstats.php?team_id=${teamId}`;
   const newsApiUrl = `https://beta.kenyschulz.com/referee/api/getnews.php`;
+  const matchesApiUrl = `https://beta.kenyschulz.com/referee/api/getmatches.php?team_id=${teamId}`;
 
   try {
-    const [statsRes, newsRes] = await Promise.all([
+    const [statsRes, newsRes, matchesRes] = await Promise.all([
       axios.get(statsApiUrl),
-      axios.get(newsApiUrl)
+      axios.get(newsApiUrl),
+      axios.get(matchesApiUrl)
     ]);
 
     const teamStats = statsRes.data;
     const allNews = newsRes.data;
+    const teamMatches = matchesRes.data || [];
 
     // Filter news related to this team
     const relatedNews = allNews.filter(post =>
@@ -43,7 +46,8 @@ exports.showTeam = async (req, res) => {
       statsPhase: teamStats.stats_phase || [],
       statsSeason: teamStats.stats_season || [],
       overall: teamStats.overall || {},
-      relatedNews
+      relatedNews,
+      matches: teamMatches
     };
 
     res.render("team-detail", { team });
@@ -52,3 +56,4 @@ exports.showTeam = async (req, res) => {
     res.status(500).send("Error loading team data");
   }
 };
+

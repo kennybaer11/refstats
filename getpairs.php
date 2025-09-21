@@ -22,7 +22,16 @@ if ($conn->connect_error) {
 }
 
 // Fetch all pairs
-$sql = "SELECT pair_id, pair_name FROM refereepairsql";
+$sql = "SELECT 
+    p.pair_id,
+    p.pair_name,
+    p.ref1_id,
+    r1.referee_name AS ref1_name,
+    p.ref2_id,
+    r2.referee_name AS ref2_name
+FROM refereepairsql p
+LEFT JOIN refereessql r1 ON p.ref1_id = r1.referee_id
+LEFT JOIN refereessql r2 ON p.ref2_id = r2.referee_id;";
 $result = $conn->query($sql);
 
 // Prepare response

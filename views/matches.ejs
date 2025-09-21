@@ -1,16 +1,67 @@
 <%- include('partials/navbar') %>
 
-<div class="container">
-  <h1>Zápasy</h1>
-<ul>
-  <% matches.forEach(m => { %>
-    <li>
-      <a href="/matches/<%= m.match_id %>">
-        <%= m.competition_name %> <%= m.season_name %> - <%= m.phase_name %> - <%= m.phasedetail_name %> - <%= m.home_team %> vs. <%= m.away_team %> - 
-        <%= new Date(m.DateTime).toISOString().slice(0,10) %>
-      </a>
-    </li>
-  <% }) %>
-</ul>
+<div class="container mt-4 mb-4">
+  <h1 class="mb-4">Zápasy</h1>
 
+  <table id="matchesTable" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Zápas</th>
+        <th>Soutěž</th>
+        <th>Sezóna</th>
+        <th>Fáze</th>
+        <th>Detail fáze</th>
+        <th>Datum</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% matches.forEach(m => { %>
+        <tr>
+          <td><a href="/matches/<%= m.match_id %>"><%= m.home_team %> vs. <%= m.away_team %></a></td>
+          <td><%= m.competition_name %></td>
+          <td><%= m.season_name %></td>
+          <td><%= m.phase_name %></td>
+          <td><%= m.phasedetail_name %></td>
+
+          <td><%= new Date(m.DateTime).toISOString().slice(0,10) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
 </div>
+
+<!-- DataTables CSS + JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $('#matchesTable').DataTable({
+    paging: true,
+    searching: true,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[5, 'desc']], // default sort by Date (column index 6)
+    language: {
+      search: "Hledat:",
+      lengthMenu: "Zobrazit _MENU_ záznamů",
+      info: "Zobrazuji _START_ až _END_ z _TOTAL_ záznamů",
+      infoEmpty: "Žádné záznamy k dispozici",
+      infoFiltered: "(filtrováno z _MAX_ celkových záznamů)",
+      zeroRecords: "Nenalezeny žádné odpovídající záznamy",
+      emptyTable: "Žádná data v tabulce",
+      paginate: {
+        first: "První",
+        last: "Poslední",
+        next: "Další",
+        previous: "Předchozí"
+      },
+      aria: {
+        sortAscending: ": aktivujte pro řazení sloupce vzestupně",
+        sortDescending: ": aktivujte pro řazení sloupce sestupně"
+      }
+    }
+  });
+});
+</script>

@@ -1,12 +1,58 @@
 <%- include('partials/navbar') %>
 
-<div class="container">
-  <h1>Soutěže</h1>
-  <ul>
-    <% competitions.forEach(c => { %>
-      <li>
-        <a href="/competitions/<%= c.competition_id %>"><%= c.competition_name %></a>
-      </li>
-    <% }) %>
-  </ul>
+<div class="container mt-4">
+  <h1 class="mb-4">Soutěže</h1>
+
+  <table id="competitionsTable" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Název soutěže</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% competitions.forEach(c => { %>
+        <tr>
+          <td>
+            <a href="/competitions/<%= c.competition_id %>"><%= c.competition_name %></a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
 </div>
+
+<!-- DataTables CSS + JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+$(document).ready(function() {
+  $('#competitionsTable').DataTable({
+    paging: true,
+    searching: true,
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    order: [[0, 'asc']], // alphabetical by competition name
+        language: {
+      search: "Hledat:",
+      lengthMenu: "Zobrazit _MENU_ záznamů",
+      info: "Zobrazuji _START_ až _END_ z _TOTAL_ záznamů",
+      infoEmpty: "Žádné záznamy k dispozici",
+      infoFiltered: "(filtrováno z _MAX_ celkových záznamů)",
+      zeroRecords: "Nenalezeny žádné odpovídající záznamy",
+      emptyTable: "Žádná data v tabulce",
+      paginate: {
+        first: "První",
+        last: "Poslední",
+        next: "Další",
+        previous: "Předchozí"
+      },
+      aria: {
+        sortAscending: ": aktivujte pro řazení sloupce vzestupně",
+        sortDescending: ": aktivujte pro řazení sloupce sestupně"
+      }
+    }
+  });
+});
+</script>
